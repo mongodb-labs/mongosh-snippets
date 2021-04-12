@@ -1,6 +1,6 @@
 {
   "name": "@addaleax/test-mongosh-snippet-mongocompat",
-  "version": "1.0.0-rc.0",
+  "version": "1.0.0",
   "description": "mongo compatibility script for mongosh",
   "main": "mongotypes.js",
   "license": "SSPL"
