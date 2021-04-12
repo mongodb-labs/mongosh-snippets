@@ -1,0 +1,33 @@
+on:
+  # Once a week or on pushes to master
+  schedule:
+    - cron: "0 3 * * 0"
+  push:
+    branches:
+      - main
+
+jobs:
+  update_index:
+    name: Update index file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+      - name: Install Dependencies
+        run: npm install
+      - name: Set up Git
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+      - name: Update index.bson.br
+        run: npm run make-index
+      - name: Verify readability index.bson.br
+        run: npm run show-index
+      - name: Commit index.bson.br changes
+        run: |
+          git commit --no-allow-empty -m "chore: update index.bson.br" index.bson.br || true
+      - name: Push updates
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

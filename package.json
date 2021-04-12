@@ -2,6 +2,11 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "bson": "^4.3.0",
     "lerna": "^4.0.0"
+  },
+  "scripts": {
+    "make-index": "node scripts/make-index",
+    "show-index": "node scripts/show-index"
   }
 }
