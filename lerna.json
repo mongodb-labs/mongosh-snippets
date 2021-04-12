@@ -1,0 +1,6 @@
+{
+  "packages": [
+    "snippets/*"
+  ],
+  "version": "independent"
+}
