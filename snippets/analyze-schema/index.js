@@ -1,7 +1,8 @@
 (() => {
-  const schema = require('mongodb-schema');
-  const { Readable, PassThrough } = require('stream');
-  const { Console } = require('console');
+  const localRequire = require('module').createRequire(__filename);
+  const schema = localRequire('mongodb-schema');
+  const { Readable, PassThrough } = localRequire('stream');
+  const { Console } = localRequire('console');
 
   globalThis.schema = function(collOrCursor, options = {}) {
     let cursor;
