@@ -1,0 +1,11 @@
+{
+  "name": "@addaleax/test-mongosh-snippet-analyze-schema",
+  "snippetName": "analyze-schema",
+  "version": "1.0.0",
+  "description": "schema(db.coll)",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mongodb-schema": "^9.0.0"
+  }
+}
