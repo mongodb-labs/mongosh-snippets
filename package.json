@@ -8,5 +8,13 @@
   "scripts": {
     "make-index": "node scripts/make-index",
     "show-index": "node scripts/show-index"
+  },
+  "homepage": "https://github.com/addaleax/mongosh-snippets",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/addaleax/mongosh-snippets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/addaleax/mongosh-snippets/issues"
   }
 }

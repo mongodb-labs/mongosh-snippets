@@ -7,5 +7,5 @@ const util = require('util');
 
 (async() => {
   const source = await fs.readFile(path.join(__dirname, '..', 'index.bson.br'));
-  console.dir(bson.deserialize(await util.promisify(zlib.brotliDecompress)(source)).index, { depth: Infinity });
+  console.dir(bson.deserialize(await util.promisify(zlib.brotliDecompress)(source)), { depth: Infinity });
 })().catch(err => { process.nextTick(() => { throw err; }); });
