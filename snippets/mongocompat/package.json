@@ -5,5 +5,8 @@
   "description": "mongo compatibility script for mongosh",
   "main": "mongotypes.js",
   "errorMatchers": "error-matchers.js",
-  "license": "SSPL"
+  "license": "SSPL",
+  "publishConfig": {
+    "access": "public"
+  }
 }
