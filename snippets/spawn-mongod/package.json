@@ -1,7 +1,7 @@
 {
   "name": "@addaleax/test-mongosh-snippet-spawn-mongod",
   "snippetName": "spawn-mongod",
-  "version": "1.0.0-rc.0",
+  "version": "1.0.0",
   "description": "Spin up a local mongod process",
   "main": "index.js",
   "license": "Apache-2.0",
