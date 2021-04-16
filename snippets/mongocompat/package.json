@@ -3,7 +3,7 @@
   "snippetName": "mongocompat",
   "version": "1.0.2",
   "description": "mongo compatibility script for mongosh",
-  "main": "mongotypes.js",
+  "main": "index.js",
   "errorMatchers": "error-matchers.js",
   "license": "SSPL",
   "publishConfig": {

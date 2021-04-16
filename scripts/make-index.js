@@ -15,6 +15,11 @@ const util = require('util');
     if (pjson.errorMatchers) {
       pjson.errorMatchers = require(path.join(snippetsDir, dir.name, pjson.errorMatchers));
     }
+    try {
+      pjson.readme = await fs.readFile(path.join(snippetsDir, dir.name, 'README.md'), 'utf8');
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
     index.push(pjson);
   }
   const ownPjsonPath = path.join(__dirname, '..', 'package.json');
