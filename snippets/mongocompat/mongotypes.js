@@ -402,7 +402,7 @@ if (!ObjectId.prototype)
     ObjectId.prototype = {};
 
 ObjectId.prototype.toString = function() {
-    return "ObjectId(" + tojson(this.str) + ")";
+    return this.inspect();
 };
 
 ObjectId.prototype.tojson = function() {
