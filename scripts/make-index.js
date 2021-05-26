@@ -22,10 +22,17 @@ const util = require('util');
     }
     index.push(pjson);
   }
+
   const ownPjsonPath = path.join(__dirname, '..', 'package.json');
   const ownPjson = JSON.parse(await fs.readFile(ownPjsonPath, 'utf8'));
   const metadata = (({ homepage, repository, bugs }) => ({ homepage, repository, bugs }))(ownPjson);
-  const data = await util.promisify(zlib.brotliCompress)(bson.serialize({ index, metadata }), {
+  const indexFileContents = {
+    indexFileVersion: 1,
+    index,
+    metadata
+  };
+
+  const data = await util.promisify(zlib.brotliCompress)(bson.serialize(indexFileContents), {
     params: {
       [zlib.constants.BROTLI_PARAM_QUALITY]: zlib.constants.BROTLI_MAX_QUALITY
     }
