@@ -67,6 +67,10 @@
         { $replaceRoot: { newRoot: '$values' } },
         ...pipeline
       ];
+      options = {
+        ...options,
+        readPreference: 'secondaryPreferred'
+      };
       return db.getSiblingDB('admin').getCollection('system.version').aggregate(pipeline, options);
     }
 
@@ -90,7 +94,7 @@
     }
 
     find(query, projection) {
-      const pipeline = [ { $match: query } ];
+      const pipeline = [ { $match: query || {} } ];
       if (projection) {
         pipeline.push({ $project: projection });
       }
