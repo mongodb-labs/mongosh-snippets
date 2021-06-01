@@ -1,5 +1,5 @@
 {
-  "name": "@addaleax/test-mongosh-snippet-mock-collection",
+  "name": "@mongosh/snippet-mock-collection",
   "snippetName": "mock-collection",
   "version": "1.0.1",
   "description": "mockCollection([{ a: 1 }, { a: 2 }]).find({ a: { $gt: 2 } })",

@@ -1,5 +1,5 @@
 {
-  "name": "@addaleax/test-mongosh-snippet-analyze-schema",
+  "name": "@mongosh/snippet-analyze-schema",
   "snippetName": "analyze-schema",
   "version": "1.0.4",
   "description": "schema(db.coll)",

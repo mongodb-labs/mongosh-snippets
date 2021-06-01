@@ -1,5 +1,5 @@
 {
-  "name": "@addaleax/test-mongosh-snippet-mongocompat",
+  "name": "@mongosh/snippet-mongocompat",
   "snippetName": "mongocompat",
   "version": "1.0.5",
   "description": "mongo compatibility script for mongosh",
