@@ -1,7 +1,7 @@
 {
   "name": "@mongosh/snippet-mongocompat",
   "snippetName": "mongocompat",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "mongo compatibility script for mongosh",
   "main": "index.js",
   "errorMatchers": "error-matchers.js",
