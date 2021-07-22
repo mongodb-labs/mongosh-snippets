@@ -300,6 +300,9 @@ Object.keySet = function(o) {
     return ret;
 };
 
+// mongosh-specific addition
+Object.bsonsize = bsonsize;
+
 // String
 if (String.prototype.trim === undefined) {
     String.prototype.trim = function() {
