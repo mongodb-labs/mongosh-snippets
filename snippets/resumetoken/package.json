@@ -1,0 +1,15 @@
+{
+  "name": "@mongosh/snippet-resumetoken",
+  "snippetName": "resumetoken",
+  "version": "1.0.0",
+  "description": "Resume token decoder script",
+  "main": "index.js",
+  "license": "SSPL",
+  "errorMatchers": "error-matchers.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "mongodb-resumetoken-decoder": "^1.0.1"
+  }
+}
