@@ -10,6 +10,6 @@
     "access": "public"
   },
   "dependencies": {
-    "mongodb-resumetoken-decoder": "^1.0.2"
+    "mongodb-resumetoken-decoder": "^1.1.0"
   }
 }
