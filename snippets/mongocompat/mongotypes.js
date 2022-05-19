@@ -5,11 +5,11 @@ if (typeof (Timestamp) != "undefined") {
     };
 
     Timestamp.prototype.getTime = function() {
-        return this.t;
+        return this.hasOwnProperty("t") ? this.t : this.high;
     };
 
     Timestamp.prototype.getInc = function() {
-        return this.i;
+        return this.hasOwnProperty("i") ? this.i : this.low;
     };
 
     Timestamp.prototype.toString = function() {
@@ -19,7 +19,9 @@ if (typeof (Timestamp) != "undefined") {
     };
 
     Timestamp.prototype.toStringIncomparable = function() {
-        return "Timestamp(" + this.t + ", " + this.i + ")";
+        var t = this.hasOwnProperty("t") ? this.t : this.high;
+        var i = this.hasOwnProperty("i") ? this.i : this.low;
+        return "Timestamp(" + t + ", " + i + ")";
     };
 } else {
     print("warning: no Timestamp class");
