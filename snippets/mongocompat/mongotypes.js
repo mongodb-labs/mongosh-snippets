@@ -414,6 +414,13 @@ ObjectId.prototype.tojson = function() {
     return this.toString();
 };
 
+Object.defineProperty(ObjectId.prototype, 'str', {
+  enumerable: true,
+  get() {
+    return this.toHexString();
+  }
+});
+
 ObjectId.prototype.valueOf = function() {
     return this.str;
 };
