@@ -1,0 +1,15 @@
+{
+  "name": "@mongosh/snippet-change-stream-monitor",
+  "snippetName": "change-stream-monitor",
+  "version": "0.0.12",
+  "description": "Mongosh snippet that allows users to monitor Change Streams on the current server.",
+  "main": "index.js",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "to-tabel": "^1.0.3",
+    "boks": "^1.0.3"
+  }
+}
