@@ -9,6 +9,7 @@
     "access": "public"
   },
   "dependencies": {
-    "to-tabel": "^1.0.3"
+    "to-tabel": "^1.0.3",
+    "boks": "^1.0.3"
   }
 }
