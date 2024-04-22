@@ -1,5 +1,5 @@
 {
-  "name": "@edmallia/snippet-change-stream-monitor",
+  "name": "@mongosh/snippet-change-stream-monitor",
   "snippetName": "change-stream-monitor",
   "version": "0.0.12",
   "description": "Mongosh snippet that allows users to monitor Change Streams on the current server.",
