@@ -13,11 +13,12 @@
 //      csuuid.ToCSUUID() => 'CSUUID("00112233-4455-6677-8899-aabbccddeeff")'
 //      pyuuid.ToPYUUID() => 'PYUUID("00112233-4455-6677-8899-aabbccddeeff")'
 // With any of the UUID variants you can use toHexUUID to echo the raw BinData with subtype and hex string:
-//      uuid.toHexUUID()   => 'HexData(4, "00112233-4455-6677-8899-aabbccddeeff")'
-//      juuid.toHexUUID()  => 'HexData(3, "77665544-3322-1100-ffee-ddccbbaa9988")'
-//      csuuid.toHexUUID() => 'HexData(3, "33221100-5544-7766-8899-aabbccddeeff")'
-//      pyuuid.toHexUUID() => 'HexData(3, "00112233-4455-6677-8899-aabbccddeeff")'
+//      uuid.toHexUUID()   => 'HexData(4, "00112233445566778899aabbccddeeff")'
+//      juuid.toHexUUID()  => 'HexData(3, "7766554433221100ffeeddccbbaa9988")'
+//      csuuid.toHexUUID() => 'HexData(3, "33221100554477668899aabbccddeeff")'
+//      pyuuid.toHexUUID() => 'HexData(3, "00112233445566778899aabbccddeeff")'
 
+(() => {
 function HexToBase64(hex) {
   var base64Digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   var base64 = "";
@@ -132,8 +133,7 @@ BinData.prototype.toPYUUID = function () {
 
 
 BinData.prototype.toHexUUID = function () {
-  var hex = Base64ToHex(this.base64()); // don't use BinData's hex function because it has bugs
-  var uuid = hex.substr(0, 8) + '-' + hex.substr(8, 4) + '-' + hex.substr(12, 4) + '-' + hex.substr(16, 4) + '-' + hex.substr(20, 12);
+  var uuid = Base64ToHex(this.base64()); // don't use BinData's hex function because it has bugs
   return 'HexData(' + this.subtype() + ', "' + uuid + '")';
 }
 
@@ -158,3 +158,9 @@ function TestUUIDHelperFunctions() {
   print(csuuid.toHexUUID());
   print(pyuuid.toHexUUID());
 }
+
+Object.assign(globalThis, {
+  UUID, JUUID, CSUUID, PYUUID, TestUUIDHelperFunctions
+});
+
+})();
