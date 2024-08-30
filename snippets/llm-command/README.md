@@ -7,7 +7,6 @@ This snippet adds an `llm` command to mongosh that provides helpful suggestions 
 ```
 export GROQ_API_KEY=gsk_XXXXXXX
 mongosh
-config.set('snippetIndexSourceURLs', 'https://github.com/juananpe/mongosh-snippets/raw/main/index.bson.br;' + config.get('snippetIndexSourceURLs') )
 ```
 
 ## Usage

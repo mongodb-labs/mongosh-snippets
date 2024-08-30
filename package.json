@@ -9,10 +9,10 @@
     "make-index": "node scripts/make-index",
     "show-index": "node scripts/show-index"
   },
-  "homepage": "https://github.com/juananpe/mongosh-snippets",
+  "homepage": "https://github.com/mongodb-labs/mongosh-snippets",
   "repository": {
     "type": "git",
-    "url": "https://github.com/juananpe/mongosh-snippets.git"
+    "url": "https://github.com/mongodb-labs/mongosh-snippets.git"
   },
   "bugs": {
     "url": "https://github.com/mongodb-labs/mongosh-snippets/issues"
