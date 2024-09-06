@@ -2,7 +2,7 @@
   "name": "@mongosh/snippet-llm-command",
   "snippetName": "llm-command",
   "version": "0.0.8",
-  "description": "A snippet that provides an llm command to ask for MongoDB query expressions based on natural language instructions. Describe what MongoDB query you want to run and the llm command will answer you with a proposal based on Groq LLM API or any other local model (using ollama)",
+  "description": "Provides a llm command to ask for MongoDB query expressions in natural language, using Groq or any other local model (ollama)",
   "author": "Juanan Pereira (https://ikasten.io)",
   "main": "index.js",
   "license": "Apache-2.0",
