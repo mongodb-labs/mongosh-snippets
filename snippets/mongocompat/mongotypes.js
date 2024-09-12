@@ -75,7 +75,9 @@ Date.prototype.tojson = function() {
         ofs + '")';
 };
 
-ISODate = function(isoDateStr) {
+if (buildInfo().version.split('.').reverse().map((x,i) => parseInt(x) * Math.pow(10,3*i)).reduce((sum, x) => sum + x, 0) < 2003001) {
+  // Not needed anymore in version 2.3.1 or later
+  ISODate = function(isoDateStr) {
     if (!isoDateStr)
         return new Date();
 
@@ -121,7 +123,8 @@ ISODate = function(isoDateStr) {
         throw Error("invalid ISO date: " + isoDateStr);
 
     return new Date(time);
-};
+  };
+}
 
 // Regular Expression
 RegExp.escape = function(text) {
