@@ -653,7 +653,7 @@ tojsonObject = function(x, indent, nolint, depth) {
         if (typeof DBCollection != 'undefined' && val == DBCollection.prototype)
             continue;
 
-        fieldStrings.push(indent + k + ": " + tojson(val, indent, nolint, depth + 1));
+        fieldStrings.push(indent + "\"" + k + "\" : " + tojson(val, indent, nolint, depth + 1));
     }
 
     if (fieldStrings.length > 0) {
