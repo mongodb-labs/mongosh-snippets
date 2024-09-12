@@ -586,8 +586,8 @@ tojson = function(x, indent, nolint, depth) {
             return s;
         }
         case "function":
-            if (x === MinKey || x === MaxKey)
-                return x.tojson();
+            if (x === MinKey) return tojson({ "$minKey" : 1 });
+            if (x === MaxKey) return tojson({ "$maxKey" : 1 });
             return x.toString();
         default:
             throw Error("tojson can't handle type " + (typeof x));
