@@ -138,8 +138,10 @@ BinData.prototype.toHexUUID = function () {
 }
 
 // for compatibility with the new mongosh shell
-if (BinData.prototype.base64 === undefined && BinData.prototype.subtype === undefined) {
+if (BinData.prototype.base64 === undefined) {
   BinData.prototype.base64 = function() { return this.buffer.base64Slice(); };
+}
+if (BinData.prototype.subtype === undefined) {
   BinData.prototype.subtype = function() { return this.sub_type; };
 }
 
