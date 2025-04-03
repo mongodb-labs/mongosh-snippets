@@ -137,7 +137,7 @@ globalThis.listChangeStreamsAsJSON = function (extended = false, allUsers = true
 //TODO add help
 globalThis.listChangeStreamsAsJSON.help = function () {_listChangeStreamsHelp();}
 
-globalThis.listChangeStreamsAsCSV = function (extended = false, delimiter=DEFAULT_DELIMITER, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.CSV, PipelineFormatEnum.JSON);}
+globalThis.listChangeStreamsAsCSV = function (extended = false, delimiter=DEFAULT_DELIMITER, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.CSV, PipelineFormatEnum.JSON, delimiter);}
 //TODO add help
 globalThis.listChangeStreamsAsCSV.help = function () {_listChangeStreamsHelp();}
 
