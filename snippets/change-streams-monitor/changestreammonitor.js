@@ -95,7 +95,6 @@ function _listChangeStreams (extended = false, allUsers = true, nsFilter = [], o
       print("Found " + changeStreamsDataRaw.length + " change streams");
       break;
     case OutputTypeEnum.JSON:
-      print("JSON");
       generateJsonOutput(tableData, extended);
       break;
     case OutputTypeEnum.CSV:
