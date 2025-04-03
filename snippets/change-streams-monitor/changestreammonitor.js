@@ -2,7 +2,21 @@ const localRequire = require("module").createRequire(__filename);
 const { Table } = localRequire("to-tabel");
 const { templates } = localRequire("boks");
 
-function _listChangeStreams (extended = false, allUsers = true, nsFilter = []) {
+const OutputTypeEnum = {
+  TABLE: 'TABLE',
+  JSON: 'JSON',
+  CSV : 'CSV'
+};
+
+const PipelineFormatEnum = {
+  EJSON : 'EJSON',
+  NONE: 'NONE',
+  JSON: 'JSON'
+};
+
+const DEFAULT_DELIMITER="||||"
+
+function _listChangeStreams (extended = false, allUsers = true, nsFilter = [], outputType = OutputTypeEnum.TABLE, pipelineFormat=PipelineFormatEnum.JSON, delimiter=DEFAULT_DELIMITER) {
   tableData = [];
   let changeStreamsDataRaw = getChangeStreams(allUsers, nsFilter);
 
@@ -16,11 +30,20 @@ function _listChangeStreams (extended = false, allUsers = true, nsFilter = []) {
     } catch (error) {}
 
     //format the pipeline for better rendering
-    let changeStreamPipeline = EJSON.stringify(
-      changeStreamOpData.cursor.originatingCommand.pipeline,
-      null,
-      1
-    );
+    let changeStreamPipeline = ""
+    switch (pipelineFormat){
+      case PipelineFormatEnum.EJSON:
+        changeStreamPipeline = EJSON.stringify(changeStreamOpData.cursor.originatingCommand.pipeline, null,1)
+        break;
+      case PipelineFormatEnum.JSON:
+        changeStreamPipeline = JSON.stringify(changeStreamOpData.cursor.originatingCommand.pipeline)
+        break;
+      case PipelineFormatEnum.NONE:
+        changeStreamPipeline = changeStreamOpData.cursor.originatingCommand.pipeline
+        break;
+      default:
+        throw new Error("Internal Error: Unexepected PipelineFormatEnum value " + pipelineFormat)
+    }
 
     let usersStr = "";
     if (changeStreamOpData.effectiveUsers){
@@ -66,8 +89,21 @@ function _listChangeStreams (extended = false, allUsers = true, nsFilter = []) {
     
   })
 
-  customConsoleTable(tableData, extended);
-  print("Found " + changeStreamsDataRaw.length + " change streams");
+  switch (outputType){
+    case OutputTypeEnum.TABLE:
+      generateTableOutput(tableData, extended);
+      print("Found " + changeStreamsDataRaw.length + " change streams");
+      break;
+    case OutputTypeEnum.JSON:
+      print("JSON");
+      generateJsonOutput(tableData, extended);
+      break;
+    case OutputTypeEnum.CSV:
+      generateCsvOutput(tableData, extended, delimiter);
+      break;
+    default:
+      throw new Error("Internal Error: Unexepected OutputTypeEnum value " + outputType)
+  }
 };
 
 function _listChangeStreamsHelp(){
@@ -91,8 +127,21 @@ function _listChangeStreamsHelp(){
  *                     Defailts to true.
  * @param {Array.<string>} nsFilter An optional array of namespace filter. Defaults to [] i.e. to filter.
  */
-globalThis.listChangeStreams = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter);}
+globalThis.listChangeStreams = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.TABLE, PipelineFormatEnum.EJSON);}
 globalThis.listChangeStreams.help = function () {_listChangeStreamsHelp();}
+
+globalThis.listChangeStreamsAsTable = globalThis.listChangeStreams
+//TODO add help
+globalThis.listChangeStreamsAsTable.help = function () {_listChangeStreamsHelp();}
+
+globalThis.listChangeStreamsAsJSON = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.JSON, PipelineFormatEnum.NONE);}
+//TODO add help
+globalThis.listChangeStreamsAsJSON.help = function () {_listChangeStreamsHelp();}
+
+globalThis.listChangeStreamsAsCSV = function (extended = false, allUsers = true, nsFilter = [], delimiter=DEFAULT_DELIMITER) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.CSV, PipelineFormatEnum.JSON);}
+//TODO add help
+globalThis.listChangeStreamsAsCSV.help = function () {_listChangeStreamsHelp();}
+
 
 /**
  * @class Contains the data that will be presented in tabular format. This is the basic data set - @see {ExtendedChangeStreamsData} for the extended version.
@@ -160,6 +209,13 @@ class ChangeStreamsData {
 
     let newTbl = new Table(ChangeStreamsData.headers(), options);
     newTbl.print();
+  }
+
+  toCsvString(delimiter){
+   return this.constructor.headers().reduce(
+      (accumulator, currentValue) => accumulator === "" ? this[currentValue.name] : accumulator + delimiter + this[currentValue.name],
+      ""
+    )
   }
 };
 
@@ -303,7 +359,7 @@ globalThis.getChangeStreams = function (allUsers, nsFilter) {
  * @param {*} data The data to be displayed in a table
  * @param {boolean} extended Whether the extended output format is being used. This is used to generate the output table headers.
  */
-globalThis.customConsoleTable = function (data, extended) {
+globalThis.generateTableOutput = function (data, extended) {
   if (data && data.length > 0) {
     const options = {
       maxSize: process.stdout.columns - 10,
@@ -322,6 +378,47 @@ globalThis.customConsoleTable = function (data, extended) {
     print("No Change Streams found!");
   }
 };
+
+/**
+ * Generates JSON output for the extracted changestream data
+ * @param {*} data The data to be displayed in a table
+ * @param {boolean} extended Whether the extended output format is being used. This is used to generate the output table headers.
+ */
+globalThis.generateJsonOutput = function (data, extended) {
+  if (data && data.length > 0) {
+    data.forEach(changeStreamOpData => {
+      print(JSON.stringify(changeStreamOpData))
+    })
+
+  } else {
+    print("No Change Streams found!");
+  }
+};
+
+/**
+ * Generates CSV output for the extracted changestream data
+ * @param {*} data The data to be displayed in a table
+ * @param {boolean} extended Whether the extended output format is being used. This is used to generate the output table headers.
+ */
+globalThis.generateCsvOutput = function (data, extended, delimiter) {
+  if (data && data.length > 0) {
+    let headersSource = extended ? ExtendedChangeStreamsData.headers() : ChangeStreamsData.headers()
+    let headers = headersSource.map(h => h.name)
+    let headersStr = headers.reduce(
+      (accumulator, currentValue) => accumulator === "" ? currentValue : accumulator + delimiter + currentValue,
+      ""
+    )
+    print(headersStr)
+
+    data.forEach(changeStreamOpData => {
+      print(changeStreamOpData.toCsvString(delimiter))
+    })
+
+  } else {
+    print("No Change Streams found!");
+  }
+};
+
 
 
 function _prettyPrintChangeStreamPipeline(connectionId) {
