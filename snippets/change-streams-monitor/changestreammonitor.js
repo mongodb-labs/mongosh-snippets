@@ -107,11 +107,12 @@ function _listChangeStreams (extended = false, allUsers = true, nsFilter = [], o
 
 function _listChangeStreamsHelp(){
   print("listChangeStreams(extended?: boolean, allUsers?: boolean, nsFilter?: any): void")
+  print("listChangeStreamsAsTable(extended?: boolean, allUsers?: boolean, nsFilter?: any): void")
   print("Prints a table with the currently open Change Streams. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour).")
   print("\t See prettyPrintChangeStreamPipeline.help() to pretty print a change stream pipeline. ")
   print("\t See ChangeStreamsData.help() and ExtendedChangeStreamsData.help() for data outputted in extended and non-extended mode.")
   print("\t @param extended — Controls whether a simple or extended output is presented. Refer to ExtendedChangeStreamsData. Defaults to false.")
-  print("\t @param allUsers — Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command. If set to true, $currentOp reports operations belonging to all users. Defailts to true.")
+  print("\t @param allUsers — Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command. If set to true, $currentOp reports operations belonging to all users. Defaults to true.")
   print("\t @param nsFilter — An optional array of namespace filter. Defaults to [] i.e. to filter.")
 }
 
@@ -123,23 +124,68 @@ function _listChangeStreamsHelp(){
  * @param {boolean} allUsers Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. 
  *                     If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command.
  *                     If set to true, $currentOp reports operations belonging to all users.
- *                     Defailts to true.
+ *                     Defaults to true.
  * @param {Array.<string>} nsFilter An optional array of namespace filter. Defaults to [] i.e. to filter.
  */
 globalThis.listChangeStreams = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.TABLE, PipelineFormatEnum.EJSON);}
 globalThis.listChangeStreams.help = function () {_listChangeStreamsHelp();}
 
+/**
+ * Alias for {@link listChangeStreams}
+ */
 globalThis.listChangeStreamsAsTable = globalThis.listChangeStreams
-//TODO add help
 globalThis.listChangeStreamsAsTable.help = function () {_listChangeStreamsHelp();}
 
-globalThis.listChangeStreamsAsJSON = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.JSON, PipelineFormatEnum.NONE);}
-//TODO add help
-globalThis.listChangeStreamsAsJSON.help = function () {_listChangeStreamsHelp();}
 
+function _listChangeStreamsAsJSONHelp(){
+  print("listChangeStreamsAsJSON(extended?: boolean, allUsers?: boolean, nsFilter?: any): void")
+  print("Prints the currently open Change Streams as a JSON string. A JSON string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour).")
+  print("\t See prettyPrintChangeStreamPipeline() to pretty print a change stream pipeline. ")
+  print("\t See ChangeStreamsData.help() and ExtendedChangeStreamsData.help() for data outputted in extended and non-extended mode.")
+  print("\t @param extended — Controls whether a simple or extended output is presented. Refer to ExtendedChangeStreamsData. Defaults to false.")
+  print("\t @param allUsers — Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command. If set to true, $currentOp reports operations belonging to all users. Defaults to true.")
+  print("\t @param nsFilter — An optional array of namespace filter. Defaults to [] i.e. to filter.")
+}
+
+/**
+ * Prints the currently open Change Streams as a JSON string. A JSON string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour). 
+ * See prettyPrintChangeStreamPipeline() to pretty print a change stream pipeline.
+ * See ChangeStreamsData and ExtendedChangeStreamsData for data outputted in extended and non-extended mode.
+ * @param {boolean} extended Controls whether a simple or extended output is presented. Refer to ExtendedChangeStreamsData. Defaults to false.
+ * @param {boolean} allUsers Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. 
+ *                     If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command.
+ *                     If set to true, $currentOp reports operations belonging to all users.
+ *                     Defaults to true.
+ * @param {Array.<string>} nsFilter An optional array of namespace filter. Defaults to [] i.e. to filter.
+ */
+globalThis.listChangeStreamsAsJSON = function (extended = false, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.JSON, PipelineFormatEnum.NONE);}
+globalThis.listChangeStreamsAsJSON.help = function () {_listChangeStreamsAsJSONHelp();}
+
+
+function _listChangeStreamsAsCSVHelp(){
+  print("listChangeStreamsAsJSON(extended?: boolean, delimiter?: string, allUsers?: boolean, nsFilter?: any): void")
+  print("Prints the currently open Change Streams as a CSV string with \"" + DEFAULT_DELIMITER + "\" as the default delimeter. A string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour). ")
+  print("\t See prettyPrintChangeStreamPipeline() to pretty print a change stream pipeline. ")
+  print("\t See ChangeStreamsData.help() and ExtendedChangeStreamsData.help() for data outputted in extended and non-extended mode.")
+  print("\t @param extended — Controls whether a simple or extended output is presented. Refer to ExtendedChangeStreamsData. Defaults to false.")
+  print("\t @param delimiter — Provide a custom delimeter for the CSV string. Defaults to \"" + DEFAULT_DELIMITER + "\"")
+  print("\t @param allUsers — Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command. If set to true, $currentOp reports operations belonging to all users. Defaults to true.")
+  print("\t @param nsFilter — An optional array of namespace filter. Defaults to [] i.e. to filter.")
+}
+/**
+ * Prints the currently open Change Streams as a CSV string with "||||" as the default delimeter. A string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour). 
+ * See prettyPrintChangeStreamPipeline() to pretty print a change stream pipeline.
+ * See ChangeStreamsData and ExtendedChangeStreamsData for data outputted in extended and non-extended mode.
+ * @param {boolean} extended Controls whether a simple or extended output is presented. Refer to ExtendedChangeStreamsData. Defaults to false.
+ * @param {string} delimiter Provide a custom delimeter for the CSV string
+ * @param {boolean} allUsers Boolean that correspond's to the allUsers flag of the $currentOp MongoDB Pipeline Stage i.e. 
+ *                     If set to false, $currentOp only reports on operations/idle connections/idle cursors/idle sessions belonging to the user who ran the command.
+ *                     If set to true, $currentOp reports operations belonging to all users.
+ *                     Defaults to true.
+ * @param {Array.<string>} nsFilter An optional array of namespace filter. Defaults to [] i.e. to filter.
+ */
 globalThis.listChangeStreamsAsCSV = function (extended = false, delimiter=DEFAULT_DELIMITER, allUsers = true, nsFilter = []) {_listChangeStreams(extended, allUsers, nsFilter, OutputTypeEnum.CSV, PipelineFormatEnum.JSON, delimiter);}
-//TODO add help
-globalThis.listChangeStreamsAsCSV.help = function () {_listChangeStreamsHelp();}
+globalThis.listChangeStreamsAsCSV.help = function () {_listChangeStreamsAsCSVHelp();}
 
 
 /**
