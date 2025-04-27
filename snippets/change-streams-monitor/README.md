@@ -6,6 +6,12 @@
     - [Sample Output - Normal Mode](#sample-output---normal-mode)
     - [Sample Output - Extended](#sample-output---extended)
   - [listChangeStreams.help()](#listchangestreamshelp)
+  - [listChangeStreamsAsTable(extended?: boolean, allUsers?: boolean, nsFilter?: Array)](#listchangestreamsastableextended-boolean-allusers-boolean-nsfilter-array)
+  - [listChangeStreamsAsTable.help()](#listchangestreamsastablehelp)
+  - [listChangeStreamsAsJSON(extended?: boolean, allUsers?: boolean, nsFilter?: Array)](#listchangestreamsasjsonextended-boolean-allusers-boolean-nsfilter-array)
+  - [listChangeStreamsAsJSON.help()](#listchangestreamsasjsonhelp)
+  - [listChangeStreamsAsCSV(extended?: boolean, delimiter: string, allUsers?: boolean, nsFilter?: Array)](#listchangestreamsascsvextended-boolean-delimiter-string-allusers-boolean-nsfilter-array)
+  - [listChangeStreamsAsCSV.help()](#listchangestreamsascsvhelp)
   - [prettyPrintChangeStreamPipeline(connectionId: any)](#prettyprintchangestreampipelineconnectionid-any)
     - [Example](#example)
   - [prettyPrintChangeStreamPipeline.help()](#prettyprintchangestreampipelinehelp)
@@ -155,6 +161,24 @@ Found 2 change streams
 ```
 
 ## listChangeStreams.help()
+Provides help on how to use the function.
+
+## listChangeStreamsAsTable(extended?: boolean, allUsers?: boolean, nsFilter?: Array<string>)
+Alias for `listChangeStreams(extended?: boolean, allUsers?: boolean, nsFilter?: Array<string>)`
+
+## listChangeStreamsAsTable.help()
+Provides help on how to use the function. Alias for `listChangeStreams.help()`
+
+## listChangeStreamsAsJSON(extended?: boolean, allUsers?: boolean, nsFilter?: Array<string>)
+Prints the currently open Change Streams as a JSON string. A JSON string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour). See documentation for `listChangeStreams(extended?: boolean, allUsers?: boolean, nsFilter?: Array<string>)` for more details about the available parameters.
+
+## listChangeStreamsAsJSON.help()
+Provides help on how to use the function.
+
+## listChangeStreamsAsCSV(extended?: boolean, delimiter: string, allUsers?: boolean, nsFilter?: Array<string>)
+Prints the currently open Change Streams as a CSV string with "||||" as the default delimeter. A string is printed separately on a newline for each open Change Stream. The behaviour of the function can be controlled with the available parameters (see parameter defaults for default behaviour). The delimiter parameter allows overriding the default delimiter. See documentation for `listChangeStreams(extended?: boolean, allUsers?: boolean, nsFilter?: Array<string>)` for more details about the other available parameters.
+
+## listChangeStreamsAsCSV.help()
 Provides help on how to use the function.
 
 ## prettyPrintChangeStreamPipeline(connectionId: any)
