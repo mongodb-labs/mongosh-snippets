@@ -1,6 +1,15 @@
 import process from "process";
+import { createLoadingAnimation } from "../helpers";
 
 export abstract class AiProvider {
+  thinking: { start: (signal: AbortSignal) => void; stop: () => void };
+
+  constructor() {
+    this.thinking = createLoadingAnimation({
+      message: 'Thinking...',
+    });
+  }
+
   /** @internal */
   getConnectionInfo() {
     return {

@@ -1,11 +1,12 @@
 import process from "process";
 
+
 export function output(text: string) {
   process.stdout.write(`${text}`);
 }
 
-export function createLoadingAnimation({signal, message = 'Loading'}: {signal: AbortSignal, message?: string}): {
-  start: (message?: string) => void;
+export function createLoadingAnimation({message = 'Loading'}: {message?: string}): {
+  start: (signal: AbortSignal) => void;
   stop: () => void;
 } {
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -13,7 +14,9 @@ export function createLoadingAnimation({signal, message = 'Loading'}: {signal: A
   let interval: NodeJS.Timeout | null = null;
   
   return {
-    start() {
+    start(
+      signal: AbortSignal,
+    ) {
       interval = setInterval(() => {
         const frame = frames[i = ++i % frames.length];
         process.stdout.write(`\r${frame} ${message}`);

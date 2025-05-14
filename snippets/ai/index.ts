@@ -1,6 +1,6 @@
-import { aiCommand, withLoadingAnimation } from './decorators';
+import { aiCommand } from './decorators';
 import { AiProvider } from './providers/ai-provider';
-import { getAtlasAiProvider } from './providers/atlas/atlas-ai-provider';
+import { getDocsAiProvider } from './providers/docs/docs-ai-provider';
 
 class AI {
   constructor(private readonly cliContext: any, private readonly ai: AiProvider) {
@@ -38,13 +38,11 @@ class AI {
   }
 
   @aiCommand
-  @withLoadingAnimation('Generating query...')
   async query(code: string) {
     return await this.ai.query(code);
   }
 
   @aiCommand
-  @withLoadingAnimation('Thinking...')
   async ask(code: string) {
     return await this.ai.ask(code);
   }
@@ -56,7 +54,7 @@ class AI {
 }
 
 module.exports = (globalThis: any) => {
-  globalThis.ai = new AI(globalThis, getAtlasAiProvider());
+  globalThis.ai = new AI(globalThis, getDocsAiProvider());
 };
 
 
