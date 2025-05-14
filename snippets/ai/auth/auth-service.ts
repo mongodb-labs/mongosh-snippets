@@ -6,27 +6,11 @@ import { EventEmitter } from 'events';
 import { createMongoDBOIDCPlugin } from '@mongodb-js/oidc-plugin';
 import { oidcServerRequestHandler } from '@mongodb-js/devtools-connect';
 import { Server } from 'http';
-
-class OIDCLogger extends EventEmitter {
-  debug(...args: unknown[]) {
-    console.debug(...args);
-    this.emit('debug', ...args);
-  }
-
-  info(...args: unknown[]) {
-    console.info(...args);
-    this.emit('info', ...args);
-  }
-
-  error(...args: unknown[]) {
-    console.error(...args);
-    this.emit('error', ...args);
-  }
-}
+import { log } from '../logger';
 
 const redirectRequestHandler = oidcServerRequestHandler.bind(null, {
-  productName: 'Compass',
-  productDocsLink: 'https://www.mongodb.com/docs/compass',
+  productName: 'mongosh AI Suite',
+  productDocsLink: 'https://www.mongodb.com/docs/mongosh',
 });
 
 export class AuthService extends AtlasAuthService {
@@ -51,7 +35,7 @@ export class AuthService extends AtlasAuthService {
     const { openBrowser, ...atlasConfig } = config;
     this.config = atlasConfig;
     this.openBrowser = openBrowser;
-    console.log('Initializing AuthService with config:', {
+    log.debug('Initializing AuthService with config:', {
       ...this.config,
     });
 
@@ -73,7 +57,7 @@ export class AuthService extends AtlasAuthService {
         await this.openBrowser(url);
       },
       allowedFlows: ['auth-code', 'device-auth'],
-      logger: new OIDCLogger(),
+      logger: log,
     });
   }
 
@@ -148,7 +132,7 @@ export class AuthService extends AtlasAuthService {
         )
       ).accessToken;
 
-      console.log('token', this.token);
+      log.debug('token', this.token);
       return {
         primaryEmail: 'test@example.com',
         sub: 'test',

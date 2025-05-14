@@ -35,7 +35,7 @@ type AIFeatureEnablement = {
   };
 };
 
-type AIQuery = {
+export type AIQuery = {
   content: {
     query: Record<
       'filter' | 'project' | 'collation' | 'sort' | 'skip' | 'limit',

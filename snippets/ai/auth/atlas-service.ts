@@ -1,3 +1,4 @@
+import { log } from '../logger';
 import { AuthService } from './auth-service';
 import type { AtlasServiceConfig } from './util';
 import { throwIfAborted } from './util';
@@ -62,13 +63,13 @@ export class AtlasService {
       throw new Error('Network traffic is not allowed');
     }
     throwIfAborted(init?.signal as AbortSignal);
-    const authHeaders = this.authService.getAuthHeaders();
+    const authHeaders = await this.authService.getAuthHeaders();
     const finalHeaders = {
       ...authHeaders,
       ...this.options?.defaultHeaders,
       ...init?.headers,
     };
-    console.log('AtlasService: Making a fetch', {
+    log.debug('AtlasService: Making a fetch', {
       url,
       headers: finalHeaders,
       method: init?.method || 'GET',
@@ -82,7 +83,7 @@ export class AtlasService {
       res.headers.forEach((value, key) => {
         responseHeadersObj[key] = value;
       });
-      console.log('AtlasService: Received API response', {
+      log.debug('AtlasService: Received API response', {
         url,
         status: res.status,
         statusText: res.statusText,
@@ -91,7 +92,7 @@ export class AtlasService {
       await throwIfNotOk(res);
       return res;
     } catch (err) {
-      console.log('AtlasService: Fetch errored', {
+      log.error('AtlasService: Fetch errored', {
         url,
         error: err instanceof Error ? err.message : err,
         stack: err instanceof Error ? err.stack : undefined,
@@ -104,7 +105,7 @@ export class AtlasService {
     init?: RequestInit,
   ): Promise<Response> {
     const authHeaders = await this.authService.getAuthHeaders();
-    console.log('AtlasService: Authenticated fetch', { url, authHeaders });
+    log.debug('AtlasService: Authenticated fetch', { url, authHeaders });
     const res = await this.fetch(url, {
       ...init,
       headers: {
