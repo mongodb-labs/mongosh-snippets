@@ -1,4 +1,4 @@
-import { log } from '../logger';
+import { log } from '../../logger';
 import { AuthService } from './auth-service';
 import type { AtlasServiceConfig } from './util';
 import { throwIfAborted } from './util';

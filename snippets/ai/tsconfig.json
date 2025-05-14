@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["./globals.d.ts"]
+    "types": ["./globals.d.ts", "node"]
   },
   "include": ["index.ts"],
   "exclude": ["node_modules", "dist"]

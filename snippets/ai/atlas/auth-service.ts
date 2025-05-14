@@ -6,7 +6,7 @@ import { EventEmitter } from 'events';
 import { createMongoDBOIDCPlugin } from '@mongodb-js/oidc-plugin';
 import { oidcServerRequestHandler } from '@mongodb-js/devtools-connect';
 import { Server } from 'http';
-import { log } from '../logger';
+import { log } from '../../logger';
 
 const redirectRequestHandler = oidcServerRequestHandler.bind(null, {
   productName: 'mongosh AI Suite',

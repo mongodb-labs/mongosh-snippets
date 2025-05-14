@@ -1,12 +1,9 @@
-import { AIQuery } from "./auth/atlas-ai-service";
+import process from "process";
 
 export function output(text: string) {
   process.stdout.write(`${text}`);
 }
 
-export function setInput(text: string) {
-  process.stdin.unshift(text);
-}
 export function createLoadingAnimation({signal, message = 'Loading'}: {signal: AbortSignal, message?: string}): {
   start: (message?: string) => void;
   stop: () => void;
@@ -38,13 +35,3 @@ export function createLoadingAnimation({signal, message = 'Loading'}: {signal: A
   };
   }
 
-export class MongoshCommandBuilder {
-  createMongoShellQuery(params: AIQuery['content']): string {
-    const {filter, project, collation, sort, skip, limit} = params.query;
-    
-  return `db.collection.find(
-    ${filter},
-    ${project ? `{ projection: ${project} }` : '{}'}
-  )${collation ? `.collation(${collation})` : ''}${sort ? `.sort(${sort})` : ''}${skip ? `.skip(${skip})` : ''}${limit ? `.limit(${limit})` : ''}`
-  };
-}

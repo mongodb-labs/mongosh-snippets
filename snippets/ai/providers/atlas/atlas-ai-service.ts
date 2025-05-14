@@ -19,7 +19,7 @@ type GenerativeAiInput = {
 const AI_MAX_REQUEST_SIZE = 5120000;
 const AI_MIN_SAMPLE_DOCUMENTS = 1;
 
-type AIAggregation = {
+export type AIAggregation = {
   content: {
     aggregation?: {
       pipeline?: string;
