@@ -3,13 +3,24 @@ import { AiProvider } from './providers/ai-provider';
 import { getDocsAiProvider } from './providers/docs/docs-ai-provider';
 
 class AI {
-  constructor(private readonly cliContext: any, private readonly ai: AiProvider) {
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this))
-      .filter(name => {
-        const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), name);
-        return descriptor && typeof descriptor.value === 'function' && name !== 'constructor';
-      });
-    
+  constructor(
+    private readonly cliContext: any,
+    private readonly ai: AiProvider,
+  ) {
+    const methods = Object.getOwnPropertyNames(
+      Object.getPrototypeOf(this),
+    ).filter((name) => {
+      const descriptor = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(this),
+        name,
+      );
+      return (
+        descriptor &&
+        typeof descriptor.value === 'function' &&
+        name !== 'constructor'
+      );
+    });
+
     // for all methods, wrap them with the wrapFunction method
     for (const methodName of methods) {
       const method = (this as any)[methodName];
@@ -34,7 +45,9 @@ class AI {
 
     const instanceState = this.cliContext.db._mongo._instanceState;
 
-    instanceState.shellApi[name ? `ai.${name}` : 'ai'] = instanceState.context[name ? `ai.${name}` : 'ai'] = wrapperFn;
+    instanceState.shellApi[name ? `ai.${name}` : 'ai'] = instanceState.context[
+      name ? `ai.${name}` : 'ai'
+    ] = wrapperFn;
   }
 
   @aiCommand
@@ -48,13 +61,16 @@ class AI {
   }
 
   @aiCommand
+  async aggregate(code: string) {
+    return await this.ai.aggregate(code);
+  }
+
+  @aiCommand
   async help(...args: string[]) {
     this.ai.help();
   }
 }
 
 module.exports = (globalThis: any) => {
-  globalThis.ai = new AI(globalThis, getDocsAiProvider());
+  globalThis.ai = new AI(globalThis, getDocsAiProvider(globalThis));
 };
-
-

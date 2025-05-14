@@ -7,7 +7,6 @@ const MONGODB_DOCS_CHATBOT_API_VERSION = 'v1';
 
 const version = '0.0.1';
 
-
 type Role = 'user' | 'assistant';
 
 type ConversationData = {
@@ -17,7 +16,7 @@ type ConversationData = {
   conversationId: string;
 };
 
-type MessageData = {
+export type MessageData = {
   id: string;
   role: Role;
   content: string;

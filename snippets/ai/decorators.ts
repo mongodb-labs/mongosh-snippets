@@ -1,7 +1,3 @@
-import { output } from "./helpers";
-import { createLoadingAnimation } from "./helpers";
-
-
 export function aiCommand<T extends Function>(
     value: T,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

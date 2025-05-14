@@ -1,11 +1,13 @@
-import process from "process";
-import { createLoadingAnimation } from "../helpers";
+import process from 'process';
+import { LoadingAnimation } from '../helpers';
+
+export type CliContext = any;
 
 export abstract class AiProvider {
-  thinking: { start: (signal: AbortSignal) => void; stop: () => void };
+  thinking: LoadingAnimation;
 
-  constructor() {
-    this.thinking = createLoadingAnimation({
+  constructor(private readonly cliContext: CliContext) {
+    this.thinking = new LoadingAnimation({
       message: 'Thinking...',
     });
   }
@@ -17,7 +19,7 @@ export abstract class AiProvider {
         connectionString: 'mongodb://localhost:27017',
       },
       id: '1234',
-    }
+    };
   }
 
   /** @internal */
@@ -26,11 +28,10 @@ export abstract class AiProvider {
     collectionName: string;
   } {
     return {
-      databaseName: 'test',
-      collectionName: 'test',
-    }
+      databaseName: this.cliContext.db._name,
+      collectionName: '',
+    };
   }
-
 
   /** @internal */
   setInput(text: string) {
@@ -51,6 +52,7 @@ export abstract class AiProvider {
     `);
   }
 
+  abstract aggregate(prompt: string): Promise<void>;
   abstract query(prompt: string): Promise<void>;
   abstract ask(prompt: string): Promise<void>;
 }
