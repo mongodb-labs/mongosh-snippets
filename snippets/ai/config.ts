@@ -1,15 +1,17 @@
 import { AiProvider } from './providers/ai-provider';
 import { EventEmitter } from 'events';
 import { z } from 'zod';
-
+import chalk from 'chalk';
+import { inspect } from 'util';
 
 const configSchema = z.object({
   provider: z.enum(['docs', 'openai', 'mistral', 'atlas', 'ollama']),
   model: z.string(),
+  includeSampleDocs: z.boolean(),
+  defaultCollection: z.string().optional(),
 });
 
 const configKeys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
-
 
 export type ConfigSchema = z.infer<typeof configSchema>;
 type ConfigKeys = keyof ConfigSchema;
@@ -17,13 +19,17 @@ type ConfigKeys = keyof ConfigSchema;
 const defaults: Record<ConfigKeys, any> = {
   provider: process.env.MONGOSH_AI_PROVIDER ?? 'docs',
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
+  includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? true,
+  defaultCollection: process.env.MONGOSH_AI_DEFAULT_COLLECTION,
 };
 
 export class Config extends EventEmitter<{
-  change: [{
-    key: ConfigKeys;
-    value: ConfigSchema[ConfigKeys];
-  }];
+  change: [
+    {
+      key: ConfigKeys;
+      value: ConfigSchema[ConfigKeys];
+    },
+  ];
 }> {
   private configMap: Record<string, any> = {};
 
@@ -68,6 +74,16 @@ export class Config extends EventEmitter<{
   }
 
   [Symbol.for('nodejs.util.inspect.custom')]() {
-    return this.configMap;
+    const lines = Object.entries(configSchema.shape).map(([key, schema]) => {
+      let type: string | undefined = undefined;
+      if (schema._def.typeName === 'ZodEnum') {
+        type = `${schema._def.values.join(' | ')}`;
+      }
+      const i = (value: any) => inspect(value, {colors: true});
+
+      return `  ${i(key)}: ${chalk.white(i(this.configMap[key]))},${type ? chalk.gray(` // ${type}`) : ''}`;
+    });
+
+    return `{\n${lines.join('\n')}\n}`;
   }
 }

@@ -1,18 +1,20 @@
+import { Config } from '../../config';
 import { aiCommand } from '../../decorators';
 import { output } from '../../helpers';
 import { AiProvider, CliContext, GetResponseOptions } from '../ai-provider';
 import { AtlasAiService, AIAggregation, AIQuery } from './atlas-ai-service';
 import { AtlasService } from './atlas-service';
 import { AuthService } from './auth-service';
-import { config } from './util';
+import { config as atlasConfig } from './util';
 import open from 'open';
 
 export class AtlasAiProvider extends AiProvider {
   constructor(
     private readonly aiService: AtlasAiService,
     cliContext: CliContext,
+    config: Config,
   ) {
-    super(cliContext);
+    super(cliContext, config);
   }
 
   async getResponse(prompt: string, {
@@ -68,9 +70,9 @@ export class AtlasAiProvider extends AiProvider {
   }
 }
 
-export function getAtlasAiProvider(cliContext: CliContext): AtlasAiProvider {
+export function getAtlasAiProvider(cliContext: CliContext, config: Config): AtlasAiProvider {
   const authService = new AuthService({
-    ...config['atlas'],
+    ...atlasConfig['atlas'],
     openBrowser: async (url: string) => {
       output('Opening authentication page in your default browser...');
       await open(url);
@@ -78,7 +80,7 @@ export function getAtlasAiProvider(cliContext: CliContext): AtlasAiProvider {
   });
 
   const atlasService = new AtlasService(authService, {
-    ...config['atlas'],
+    ...atlasConfig['atlas'],
   });
 
   const aiService = new AtlasAiService({
@@ -86,5 +88,5 @@ export function getAtlasAiProvider(cliContext: CliContext): AtlasAiProvider {
     apiURLPreset: 'admin-api',
   });
 
-  return new AtlasAiProvider(aiService, cliContext);
+  return new AtlasAiProvider(aiService, cliContext, config);
 }

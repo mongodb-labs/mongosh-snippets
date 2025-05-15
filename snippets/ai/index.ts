@@ -2,12 +2,10 @@ import { aiCommand } from './decorators';
 import { AiProvider, EmptyAiProvider } from './providers/ai-provider';
 import { getAtlasAiProvider } from './providers/atlas/atlas-ai-provider';
 import { getDocsAiProvider } from './providers/docs/docs-ai-provider';
-import {
-  getAiSdkProvider,
-  models,
-} from './providers/generic/ai-sdk-provider';
+import { getAiSdkProvider, models } from './providers/generic/ai-sdk-provider';
 import { Config, ConfigSchema } from './config';
 import { CliContext, wrapAllFunctions, formatHelpCommands } from './helpers';
+import chalk from 'chalk';
 
 class AI {
   private readonly replConfig: {
@@ -37,12 +35,13 @@ class AI {
           this.ai = this.getProvider(event.value as ConfigSchema['provider']);
           break;
         case 'model':
-          if (Object.keys(models).includes(event.value)) {
+          if (Object.keys(models).includes(event.value as string)) {
             this.ai = getAiSdkProvider(
               models[this.config.get('provider') as keyof typeof models](
-                event.value,
+                event.value as string,
               ),
               this.cliContext,
+              this.config,
             );
           } else {
             throw new Error(`Invalid model: ${event.value}`);
@@ -53,7 +52,9 @@ class AI {
       }
     });
 
-    this.ai = this.getProvider(process.env.MONGOSH_AI_PROVIDER as ConfigSchema['provider'] | undefined);
+    this.ai = this.getProvider(
+      process.env.MONGOSH_AI_PROVIDER as ConfigSchema['provider'] | undefined,
+    );
     wrapAllFunctions(this.cliContext, this);
 
     this.setupConfig();
@@ -65,12 +66,14 @@ class AI {
     this.ai = this.getProvider(this.config.get('provider'));
   }
 
-  private getProvider(provider: ConfigSchema['provider'] | undefined): AiProvider {
+  private getProvider(
+    provider: ConfigSchema['provider'] | undefined,
+  ): AiProvider {
     switch (provider) {
       case 'docs':
-        return getDocsAiProvider(this.cliContext);
+        return getDocsAiProvider(this.cliContext, this.config);
       case 'atlas':
-        return getAtlasAiProvider(this.cliContext);
+        return getAtlasAiProvider(this.cliContext, this.config);
       case 'openai':
       case 'mistral':
       case 'ollama':
@@ -78,53 +81,70 @@ class AI {
         return getAiSdkProvider(
           models[provider](model === 'default' ? undefined : model),
           this.cliContext,
+          this.config,
         );
       default:
-        return new EmptyAiProvider(this.cliContext);
+        return new EmptyAiProvider(this.cliContext, this.config);
     }
   }
 
-  @aiCommand
-  async command(prompt: string) {
-    await this.ai.command(prompt);
+  @aiCommand()
+  async shell(prompt: string) {
+    await this.ai.shell(prompt);
   }
 
-  @aiCommand
+  @aiCommand()
+  async data(prompt: string) {
+    await this.ai.data(prompt);
+  }
+
+  @aiCommand()
   async query(prompt: string) {
     await this.ai.query(prompt);
   }
 
-  @aiCommand
+  @aiCommand()
   async ask(prompt: string) {
     await this.ai.ask(prompt);
   }
 
-  @aiCommand
+  @aiCommand()
   async aggregate(prompt: string) {
     await this.ai.aggregate(prompt);
   }
 
-  @aiCommand
-  async help(...args: string[]) {
-    const commands = [
-      { cmd: 'ai.ask', desc: 'ask questions', example: 'ai.ask how do I run queries in mongosh?' },
-      { cmd: 'ai.command', desc: 'generate any mongosh command', example: 'ai.command create a new database' },
-      { cmd: 'ai.query', desc: 'generate a MongoDB query', example: 'ai.query find documents where name = "Ada"' },
-      { cmd: 'ai.aggregate', desc: 'generate a MongoDB aggregation', example: 'ai.aggregate find documents where name = "Ada"' },
-      { cmd: 'ai.config', desc: 'configure the AI commands', example: 'ai.config.set("provider", "ollama")' }
-    ];
+  @aiCommand({requiresPrompt: false})
+  async help() {
+    this.ai.help({
+      provider: this.config.get('provider'),
+      model: this.config.get('model'),
+    });
+  }
 
-    this.ai.respond(
-      formatHelpCommands(
-        commands,
-        this.config.get('provider'),
-        this.config.get('model')
-      )
-    );
+  @aiCommand()
+  async clear() {
+    this.ai.clear();
+  }
+
+  @aiCommand()
+  async collection(name: string) {
+    await this.ai.collection(name);
+  }
+
+  @aiCommand()
+  async provider(provider: string) {
+    this.config.set('provider', provider);
+    this.ai.respond(`Switched to ${chalk.blue(provider)} provider`);
+  }
+
+  @aiCommand()
+  async model(model: string) {
+    this.config.set('model', model);
+    this.ai.respond(`Switched to ${chalk.blue(model)} model`);
   }
 
   [Symbol.for('nodejs.util.inspect.custom')]() {
-    this.ai.help();
+    this.help();
     return '';
   }
 }

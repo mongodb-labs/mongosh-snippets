@@ -1,5 +1,8 @@
 import process from 'process';
-import { LoadingAnimation } from '../helpers';
+import { formatHelpCommands, LoadingAnimation } from '../helpers';
+import chalk from 'chalk';
+import { Config } from '../config';
+import { CoreMessage } from 'ai';
 
 export type CliContext = any;
 
@@ -11,11 +14,24 @@ export type GetResponseOptions = {
 
 export abstract class AiProvider {
   thinking: LoadingAnimation;
+  conversation: { messages: CoreMessage[] } = {
+    messages: [],
+  };
 
-  constructor(private readonly cliContext: CliContext) {
+  public session: {
+    collection: string | undefined;
+  };
+
+  constructor(
+    private readonly cliContext: CliContext,
+    private readonly config: Config,
+  ) {
     this.thinking = new LoadingAnimation({
       message: 'Thinking...',
     });
+    this.session = {
+      collection: this.config.get('defaultCollection'),
+    };
   }
 
   /** @internal */
@@ -35,13 +51,26 @@ export abstract class AiProvider {
   } {
     return {
       databaseName: this.cliContext.db._name,
-      collectionName: '',
+      collectionName: this.session.collection ?? '',
     };
   }
 
   /** @internal */
+  async getSampleDocuments(
+    collectionName: string,
+  ): Promise<Record<string, unknown>[]> {
+    return (
+      await this.cliContext.db.getCollection(collectionName).aggregate([
+        {
+          $sample: { size: 3 },
+        },
+      ])
+    ).toArray();
+  }
+
+  /** @internal */
   setInput(text: string) {
-    let actualText = text.replace('\n\n', '\n')
+    let actualText = text.replace('\n\n', '\n');
     process.stdin.unshift(actualText, 'utf-8');
   }
   /** @internal */
@@ -49,15 +78,125 @@ export abstract class AiProvider {
     process.stdout.write(text);
   }
 
-  help() { 
+  help({ model, provider }: { model: string; provider: string }) {
+    const commands = [
+      {
+        cmd: 'ai.ask',
+        desc: 'ask questions',
+        example: 'ai.ask how do I run queries in mongosh?',
+      },
+      {
+        cmd: 'ai.data',
+        desc: 'generate data-related mongosh commands',
+        example: 'ai.data insert some sample user info',
+      },
+      {
+        cmd: 'ai.query',
+        desc: 'generate a MongoDB query',
+        example: 'ai.query find documents where name = "Ada"',
+      },
+      {
+        cmd: 'ai.aggregate',
+        desc: 'generate a MongoDB aggregation',
+        example: 'ai.aggregate find documents where name = "Ada"',
+      },
+      {
+        cmd: 'ai.collection',
+        desc: 'set the active collection',
+        example: 'ai.collection("users")',
+      },
+      {
+        cmd: 'ai.shell',
+        desc: 'generate general mongosh commands',
+        example: 'ai.shell get sharding info',
+      },
+      {
+        cmd: 'ai.config',
+        desc: 'configure the AI commands',
+        example: 'ai.config.set("provider", "ollama")',
+      },
+    ];
+
+    this.respond(
+      formatHelpCommands(commands, {
+        provider,
+        model,
+        collection: this.session.collection,
+      }),
+    );
+  }
+
+  async ensureCollectionName(prompt: string): Promise<void> {
+    if (!this.session.collection) {
+      // Try to get the collection name from the current database if there's only one
+      const collections = await this.cliContext.db.getCollectionNames();
+      if (collections.length === 1) {
+        this.session.collection = collections[0];
+        this.respond(
+          `Active collection set to ${chalk.blue(this.session.collection)}. Use ${chalk.yellow('ai.collection')} to set a different collection.`,
+        );
+      } else {
+        const response = await this.getResponse(
+          'User\'s prompt: ' + prompt, {
+            systemPrompt: "A user prompted about something which is likely related to a collection. You pick the collection that clearly matches the user's request. The collections to you have access to are: " + collections.join('; ') + ". If there is no clear match or if no collection is needed, return 'none'. Otherwise, return the collection name. Output only the collection name and nothing else, without formatting.",
+          signal: AbortSignal.timeout(30_000),
+          expectedOutput: 'text',
+        });
+        if (collections.includes(response)) {
+          this.session.collection = response;
+          this.respond(
+            `Active collection was determined to be ${chalk.blue(this.session.collection)}. Use ${chalk.yellow('ai.collection')} to set a different collection.\n`,
+          );
+        } else {
+          throw new Error(
+            `No active collection set. Use ${chalk.yellow('ai.collection("collection_name")')} to set a collection.\nCollections in ${chalk.white(this.cliContext.db._name)}: ${chalk.gray(
+              collections.join(', '),
+            )}`,
+          );
+        }
+      }
+    }
+  }
+
+  private async getSystemPrompt(
+    systemPrompt: string,
+    {
+      includeSampleDocs = false,
+    }: {
+      includeSampleDocs?: boolean;
+    },
+  ): Promise<string> {
+    return (
+      `You are a MongoDB and mongosh expert. ${systemPrompt}. Do not provide any text, explanation or formatting.` +
+      `Current Database: ${this.cliContext.db._name}. ` +
+      (this.session.collection
+        ? `Current Collection: ${this.session.collection}. `
+        : '') +
+      (includeSampleDocs &&
+      this.session.collection &&
+      this.config.get('includeSampleDocs')
+        ? `Sample documents from ${this.cliContext.db._name}.${this.session.collection}: ${JSON.stringify(
+            await this.getSampleDocuments(this.session.collection),
+          )}. Skip the use command to switch to the database, it is already set.`
+        : '')
+    );
+  }
+
+  async collection(prompt: string | undefined): Promise<void> {
+    this.session.collection = prompt;
+    this.respond(`Active collection set to ${chalk.blue(prompt ?? 'none')}`);
   }
 
   async aggregate(prompt: string): Promise<void> {
     const signal = AbortSignal.timeout(30_000);
+    await this.ensureCollectionName(prompt);
+
     this.thinking.start(signal);
 
-    const systemPrompt =
-      "You are a MongoDB and mongosh aggregation expert. Respond only with the exact mongosh aggregation command that matches the user's request. Only output the command, no explanation or formatting.";
+    const systemPrompt = await this.getSystemPrompt(
+      "You generate the exact mongosh aggregate command that matches the user's request",
+      { includeSampleDocs: true },
+    );
     const response = await this.getResponse(prompt, {
       systemPrompt,
       signal,
@@ -65,15 +204,20 @@ export abstract class AiProvider {
     });
 
     this.thinking.stop();
-    this.setInput(this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }));
+    this.setInput(
+      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+    );
   }
 
-  async command(prompt: string,): Promise<void> {
+  async shell(prompt: string): Promise<void> {
     const signal = AbortSignal.timeout(30_000);
+
     this.thinking.start(signal);
 
-    const systemPrompt =
-      "You are a MongoDB and mongosh query expert. Respond only with a runnable mongosh command that matches the user's request. No explanation or formatting.";
+    const systemPrompt = await this.getSystemPrompt(
+      "You generate a runnable mongosh command that matches the user's request",
+      { includeSampleDocs: false },
+    );
     const response = await this.getResponse(prompt, {
       systemPrompt,
       signal,
@@ -81,15 +225,21 @@ export abstract class AiProvider {
     });
 
     this.thinking.stop();
-    this.setInput(this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }));
+    this.setInput(
+      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+    );
   }
 
-  async query(prompt: string,): Promise<void> {
+  async data(prompt: string): Promise<void> {
+    await this.ensureCollectionName(prompt);
     const signal = AbortSignal.timeout(30_000);
+
     this.thinking.start(signal);
 
-    const systemPrompt =
-      "You are a MongoDB and mongosh query expert. Respond only with the exact mongosh query command that matches the user's request. No explanation or formatting.";
+    const systemPrompt = await this.getSystemPrompt(
+      "You generate a runnable mongosh command that matches the user's request",
+      { includeSampleDocs: true },
+    );
     const response = await this.getResponse(prompt, {
       systemPrompt,
       signal,
@@ -97,55 +247,99 @@ export abstract class AiProvider {
     });
 
     this.thinking.stop();
-    this.setInput(this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }));
+    this.setInput(
+      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+    );
   }
 
-  cleanUpResponse(text: string, {
-    expectedOutput,
-  }: {
-    expectedOutput: 'mongoshCommand' | 'text';
-  }): string {
+  async query(prompt: string): Promise<void> {
+    const signal = AbortSignal.timeout(30_000);
+    await this.ensureCollectionName(prompt);
+
+    this.thinking.start(signal);
+
+    const systemPrompt = await this.getSystemPrompt(
+      "You generate the exact mongosh find command that matches the user's request.",
+      { includeSampleDocs: true },
+    );
+    const response = await this.getResponse(prompt, {
+      systemPrompt,
+      signal,
+      expectedOutput: 'mongoshCommand',
+    });
+
+    this.thinking.stop();
+    this.setInput(
+      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+    );
+  }
+
+  cleanUpResponse(
+    text: string,
+    {
+      expectedOutput,
+    }: {
+      expectedOutput: 'mongoshCommand' | 'text';
+    },
+  ): string {
     if (expectedOutput === 'mongoshCommand') {
-      return text.replace(/```\w*/g, '').replace(/```/g, '').trim();
+      return text
+        .replace(/```\w*/g, '')
+        .replace(/```/g, '')
+        .trim();
     }
-    
+
     return text;
   }
 
-  abstract getResponse(prompt: string, {
-    systemPrompt,
-    signal,
-    expectedOutput,
-  }: {
-    systemPrompt?: string;
-    signal: AbortSignal;
-    expectedOutput: 'mongoshCommand' | 'text';
-  }): Promise<string>;
+  abstract getResponse(
+    prompt: string,
+    {
+      systemPrompt,
+      signal,
+      expectedOutput,
+    }: {
+      systemPrompt?: string;
+      signal: AbortSignal;
+      expectedOutput: 'mongoshCommand' | 'text';
+    },
+  ): Promise<string>;
 
- async ask(prompt: string): Promise<void> {
+  async ask(prompt: string): Promise<void> {
     const signal = AbortSignal.timeout(30_000);
     this.thinking.start(signal);
 
     const response = await this.getResponse(prompt, {
-      systemPrompt: 'You are a MongoDB and mongosh expert. Give brief answers without any formatting.',
+      systemPrompt:
+        'You are a MongoDB and mongosh expert. Give brief answers without any formatting.',
       signal,
       expectedOutput: 'text',
     });
 
     this.thinking.stop();
     this.respond(this.cleanUpResponse(response, { expectedOutput: 'text' }));
-  };
+  }
+
+  public clear() {
+    this.session = {
+      collection: this.config.get('defaultCollection'),
+    };
+    this.respond('Session cleared');
+  }
 }
 
 export class EmptyAiProvider extends AiProvider {
   readonly setupError =
     'ai snippet has not finished setup yet. Set MONGOSH_AI_PROVIDER={provider} if you need quick setup';
 
-  async getResponse(prompt: string, {
-    systemPrompt,
-  }: {
-    systemPrompt?: string;
-  }): Promise<string> {
+  async getResponse(
+    prompt: string,
+    {
+      systemPrompt,
+    }: {
+      systemPrompt?: string;
+    },
+  ): Promise<string> {
     throw new Error(this.setupError);
   }
 }

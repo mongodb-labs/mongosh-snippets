@@ -68,7 +68,7 @@ export function wrapFunction(
   cliContext: CliContext,
   instance: any,
   name: string | undefined,
-  fn: Function
+  fn: Function,
 ) {
   const wrapperFn = (...args: string[]) => {
     return Object.assign(fn(...args), {
@@ -88,11 +88,11 @@ export function wrapFunction(
 export function wrapAllFunctions(cliContext: CliContext, instance: any) {
   const instanceState = cliContext.db._mongo._instanceState;
   const methods = Object.getOwnPropertyNames(
-    Object.getPrototypeOf(instance)
+    Object.getPrototypeOf(instance),
   ).filter((name) => {
     const descriptor = Object.getOwnPropertyDescriptor(
       Object.getPrototypeOf(instance),
-      name
+      name,
     );
     return (
       descriptor &&
@@ -119,16 +119,26 @@ interface HelpCommand {
   example?: string;
 }
 
-export function formatHelpCommands(commands: HelpCommand[], provider: string, model: string): string {
-  const maxCmdLength = Math.max(...commands.map(c => c.cmd.length));
-  const formattedCommands = commands.map(c => {
-    const padding = ' '.repeat(maxCmdLength - c.cmd.length);
-    const base = `  ${chalk.yellow(c.cmd)}${padding} ${chalk.white(c.desc)}`;
-    return c.example ? `${base} ${chalk.gray(`| ${c.example}`)}` : base;
-  }).join('\n');
+export function formatHelpCommands(
+  commands: HelpCommand[],
+  {
+    provider,
+    model,
+    collection,
+  }: { provider: string; model: string; collection?: string },
+): string {
+  const maxCmdLength = Math.max(...commands.map((c) => c.cmd.length));
+  const formattedCommands = commands
+    .map((c) => {
+      const padding = ' '.repeat(maxCmdLength - c.cmd.length);
+      const base = `  ${chalk.yellow(c.cmd)}${padding} ${chalk.white(c.desc)}`;
+      return c.example ? `${base} ${chalk.gray(`| ${c.example}`)}` : base;
+    })
+    .join('\n');
 
   return `${chalk.blue.bold('AI command suite for mongosh')}
-${chalk.gray(`Using ${chalk.white.bold(provider)} as provider and its ${chalk.white.bold(model)} model`)}\n
-${formattedCommands}
+${chalk.gray(`Collection: ${chalk.white.bold(collection ?? 'not set')}. Set it with ai.collection("collection_name")`)}\n
+${formattedCommands}\n
+${chalk.gray(`Using ${chalk.white.bold(provider)} as provider and its ${chalk.white.bold(model)} model`)}
   `.trim();
 }

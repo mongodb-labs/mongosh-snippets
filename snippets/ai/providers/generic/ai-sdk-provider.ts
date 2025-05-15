@@ -3,29 +3,19 @@ import { CoreMessage, generateText, LanguageModel } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider';
-
-interface AIConfig {
-  model: LanguageModel;
-  temperature?: number;
-  maxTokens?: number;
-}
-
+import { Config } from '../../config';
 
 export class AiSdkProvider extends AiProvider {
-  private model: LanguageModel;
-  private conversation: { messages: CoreMessage[] } = {
-    messages: [],
-  };
-
   constructor(
-    private readonly config: AIConfig,
+    private readonly model: LanguageModel,
+    config: Config,
     cliContext: CliContext,
   ) {
-    super(cliContext);
-    this.model = config.model;
+    super(cliContext, config);
+    this.model = model;
   }
 
-   async getResponse(
+  async getResponse(
     prompt: string,
     {
       systemPrompt,
@@ -35,11 +25,10 @@ export class AiSdkProvider extends AiProvider {
       signal: AbortSignal;
     },
   ): Promise<string> {
-
     this.conversation.messages.push({ role: 'user', content: prompt });
 
     try {
-    const { text } = await generateText({
+      const { text } = await generateText({
         model: this.model,
         messages: this.conversation.messages,
         system: systemPrompt,
@@ -48,9 +37,10 @@ export class AiSdkProvider extends AiProvider {
 
       const aiResponse = text;
 
-      this.conversation.messages.push(
-        { role: 'assistant', content: aiResponse },
-      );
+      this.conversation.messages.push({
+        role: 'assistant',
+        content: aiResponse,
+      });
       return aiResponse;
     } catch (error) {
       this.conversation.messages.pop();
@@ -78,11 +68,7 @@ export const models = {
 export function getAiSdkProvider(
   model: LanguageModel,
   cliContext: CliContext,
+  config: Config,
 ): AiSdkProvider {
-  return new AiSdkProvider(
-    {
-      model,
-    },
-    cliContext,
-  );
+  return new AiSdkProvider(model, config, cliContext);
 }
