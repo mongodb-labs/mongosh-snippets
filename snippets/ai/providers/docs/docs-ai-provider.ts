@@ -39,7 +39,7 @@ export class DocsAiProvider extends AiProvider {
 
     this.thinking.start(signal);
 
-    const wrappedPrompt = `Tell me the mongosh command for aggregating that would fit this prompt: ${prompt}. Just tell me the command no other words or formatting.`;
+    const wrappedPrompt = `Tell me the mongosh command for aggregating that would fit this prompt: ${prompt}. Do not say anything else. Do not use any formatting. Return the command.`;
     const response = await this.askChatbot(wrappedPrompt, signal);
 
     this.thinking.stop();
@@ -52,7 +52,7 @@ export class DocsAiProvider extends AiProvider {
 
     this.thinking.start(signal);
 
-    const wrappedPrompt = `Tell me the mongosh command for querying that would fit this prompt: ${prompt}. Just tell me the command no other words or formatting.`;
+    const wrappedPrompt = `Tell me the mongosh command for querying that would fit this prompt: ${prompt}. Do not say anything else. Do not use any formatting. Return the command.`;
     const response = await this.askChatbot(wrappedPrompt, signal);
 
     this.thinking.stop();
