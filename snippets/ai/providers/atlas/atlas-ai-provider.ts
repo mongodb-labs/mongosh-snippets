@@ -1,6 +1,6 @@
 import { aiCommand } from '../../decorators';
 import { output } from '../../helpers';
-import { AiProvider, CliContext } from '../ai-provider';
+import { AiProvider, CliContext, GetResponseOptions } from '../ai-provider';
 import { AtlasAiService, AIAggregation, AIQuery } from './atlas-ai-service';
 import { AtlasService } from './atlas-service';
 import { AuthService } from './auth-service';
@@ -15,6 +15,14 @@ export class AtlasAiProvider extends AiProvider {
     super(cliContext);
   }
 
+  async getResponse(prompt: string, {
+    systemPrompt,
+    signal,
+    expectedOutput,
+  }: GetResponseOptions): Promise<string> {
+    throw new Error('This is not supported by the Atlas AI provider.');
+  }
+
   async query(prompt: string): Promise<void> {
     const query = await this.aiService.getQueryFromUserInput(
       {
@@ -27,10 +35,6 @@ export class AtlasAiProvider extends AiProvider {
     );
 
     this.setInput(this.createMongoShellQuery(query.content));
-  }
-
-  async ask(prompt: string): Promise<void> {
-    this.respond('This is not supported by the Atlas AI provider.');
   }
 
   async aggregate(prompt: string): Promise<void> {

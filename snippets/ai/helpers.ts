@@ -47,3 +47,88 @@ export class LoadingAnimation {
     }
   }
 }
+
+export interface CliContext {
+  db: {
+    _mongo: {
+      _instanceState: {
+        evaluationListener: {
+          setConfig: (key: string, value: any) => Promise<void>;
+          getConfig: <T>(key: string) => Promise<T>;
+        };
+        registerPlugin: (plugin: any) => void;
+        shellApi: Record<string, any>;
+        context: Record<string, any>;
+      };
+    };
+  };
+}
+
+export function wrapFunction(
+  cliContext: CliContext,
+  instance: any,
+  name: string | undefined,
+  fn: Function
+) {
+  const wrapperFn = (...args: string[]) => {
+    return Object.assign(fn(...args), {
+      [Symbol.for('@@mongosh.syntheticPromise')]: true,
+    });
+  };
+  wrapperFn.isDirectShellCommand = true;
+  wrapperFn.returnsPromise = true;
+
+  const instanceState = cliContext.db._mongo._instanceState;
+
+  instanceState.shellApi[name ? `ai.${name}` : 'ai'] = instanceState.context[
+    name ? `ai.${name}` : 'ai'
+  ] = wrapperFn;
+}
+
+export function wrapAllFunctions(cliContext: CliContext, instance: any) {
+  const instanceState = cliContext.db._mongo._instanceState;
+  const methods = Object.getOwnPropertyNames(
+    Object.getPrototypeOf(instance)
+  ).filter((name) => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(instance),
+      name
+    );
+    return (
+      descriptor &&
+      typeof descriptor.value === 'function' &&
+      name !== 'constructor'
+    );
+  });
+
+  // for all methods, wrap them with the wrapFunction method
+  for (const methodName of methods) {
+    const method = instance[methodName];
+    if (typeof method === 'function' && method.isDirectShellCommand) {
+      wrapFunction(cliContext, instance, methodName, method.bind(instance));
+    }
+  }
+  instanceState.registerPlugin(instance);
+
+  wrapFunction(cliContext, instance, undefined, instance.help.bind(instance));
+}
+
+interface HelpCommand {
+  cmd: string;
+  desc: string;
+  example?: string;
+}
+
+export function formatHelpCommands(commands: HelpCommand[], provider: string, model: string): string {
+  const maxCmdLength = Math.max(...commands.map(c => c.cmd.length));
+  const formattedCommands = commands.map(c => {
+    const padding = ' '.repeat(maxCmdLength - c.cmd.length);
+    const base = `  ${chalk.yellow(c.cmd)}${padding} ${chalk.white(c.desc)}`;
+    return c.example ? `${base} ${chalk.gray(`| ${c.example}`)}` : base;
+  }).join('\n');
+
+  return `${chalk.blue.bold('AI command suite for mongosh')}
+${chalk.gray(`Using ${chalk.white.bold(provider)} as provider and its ${chalk.white.bold(model)} model`)}\n
+${formattedCommands}
+  `.trim();
+}

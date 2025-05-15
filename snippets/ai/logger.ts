@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 
-const IS_DEBUG = true;
+const IS_DEBUG = process.env.DEBUG === 'true';
 
 class Logger extends EventEmitter {
     debug(...args: unknown[]) {

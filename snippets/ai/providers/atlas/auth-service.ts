@@ -146,7 +146,7 @@ export class AuthService extends AtlasAuthService {
       // return userInfo;
     } catch (err) {
       this.currentUser = null;
-      console.error('Sign-in error:', err);
+      log.error('Sign-in error:', err);
       throw err;
     }
   }
@@ -194,7 +194,7 @@ export class AuthService extends AtlasAuthService {
     try {
       await this.plugin.destroy();
     } catch (error) {
-      console.error('Error during sign out:', error);
+      log.error('Error during sign out:', error);
     } finally {
       this.currentUser = null;
       await this.cleanupServer();
