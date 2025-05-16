@@ -14,10 +14,10 @@ export function aiCommand({
       if (requiresPrompt === false && args.length > 0) {
         throw new Error('This command does not accept any arguments');
       } else if (requiresPrompt && args.length === 0) {
-        throw new Error('Please specify a prompt to run');
+        throw new Error('Please specify arguments to run');
       }
       // Combine all arguments into a single string
-      const combinedString = args.join(' ');
+      const combinedString = args.join(' ').trim();
       // Call the original function with the combined string
       return value.call(this, combinedString);
     } as unknown as T;  // Cast the wrapped function to match the original type

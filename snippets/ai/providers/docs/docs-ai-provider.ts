@@ -20,7 +20,7 @@ export class DocsAiProvider extends AiProvider {
   ): Promise<string> {
     try {
     // Initialize conversation if not exists
-    if (!this.conversation) {
+    if (!this.docsConversation) {
       const conv = await this.aiService.createConversation({
         signal,
       });
@@ -37,7 +37,7 @@ export class DocsAiProvider extends AiProvider {
     let formattedResponse = response.content;
     if (expectedOutput === 'text') {
       // Format and display the response
-      formattedResponse = chalk.blue.bold('Answer:\n') + response.content;
+      formattedResponse = chalk.blue.bold('Answer: ') + response.content;
 
       // Add references if they exist
       if (response.references && response.references.length > 0) {

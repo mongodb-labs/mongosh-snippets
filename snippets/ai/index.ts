@@ -4,7 +4,7 @@ import { getAtlasAiProvider } from './providers/atlas/atlas-ai-provider';
 import { getDocsAiProvider } from './providers/docs/docs-ai-provider';
 import { getAiSdkProvider, models } from './providers/generic/ai-sdk-provider';
 import { Config, ConfigSchema } from './config';
-import { CliContext, wrapAllFunctions, formatHelpCommands } from './helpers';
+import { CliContext, wrapAllFunctions } from './helpers';
 import chalk from 'chalk';
 
 class AI {
@@ -29,13 +29,20 @@ class AI {
     this.config = new Config(this.replConfig);
 
     // Set up provider change listener
-    this.config.on('change', (event) => {
+    this.config.on('change', async (event) => {
       switch (event.key) {
         case 'provider':
           this.ai = this.getProvider(event.value as ConfigSchema['provider']);
           break;
         case 'model':
-          if (Object.keys(models).includes(event.value as string)) {
+            if (!Object.keys(models).includes(this.config.get('provider') as keyof typeof models)) {
+              if (event.value == 'default') {
+                return;
+              }
+              await this.config.set('model', 'default');
+              throw new Error(`${this.config.get('provider')} does not support custom models`);
+            }
+          try {
             this.ai = getAiSdkProvider(
               models[this.config.get('provider') as keyof typeof models](
                 event.value as string,
@@ -43,8 +50,8 @@ class AI {
               this.cliContext,
               this.config,
             );
-          } else {
-            throw new Error(`Invalid model: ${event.value}`);
+          } catch (error) {
+            throw new Error(`Invalid model, please ensure your name is correct: ${error}`);
           }
           break;
         default:

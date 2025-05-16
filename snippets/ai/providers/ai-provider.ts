@@ -70,8 +70,12 @@ export abstract class AiProvider {
 
   /** @internal */
   setInput(text: string) {
-    let actualText = text.replace('\n\n', '\n');
-    process.stdin.unshift(actualText, 'utf-8');
+    const trimmedText = text.trim();
+    if (/[\n\r]/.test(trimmedText)) {
+      // If the text includes a newline or carriage return, we should enter editor mode first
+      process.stdin.unshift('.editor\n', 'utf-8');
+    }
+    process.stdin.unshift(trimmedText, 'utf-8');
   }
   /** @internal */
   respond(text: string) {
@@ -283,13 +287,14 @@ export abstract class AiProvider {
     },
   ): string {
     if (expectedOutput === 'mongoshCommand') {
+      // Often the models will return a command in a markdown code block, which we don't want
       return text
         .replace(/```\w*/g, '')
         .replace(/```/g, '')
         .trim();
     }
 
-    return text;
+    return chalk.blue.bold('Answer: ') + text;
   }
 
   abstract getResponse(
