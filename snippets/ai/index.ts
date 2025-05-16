@@ -45,7 +45,7 @@ class AI {
           try {
             this.ai = getAiSdkProvider(
               models[this.config.get('provider') as keyof typeof models](
-                event.value as string,
+                event.value == 'default' ? undefined : event.value as string,
               ),
               this.cliContext,
               this.config,
@@ -98,6 +98,11 @@ class AI {
   @aiCommand()
   async shell(prompt: string) {
     await this.ai.shell(prompt);
+  }
+
+  @aiCommand()
+  async general(prompt: string) {
+    await this.ai.general(prompt);
   }
 
   @aiCommand()

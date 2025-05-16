@@ -86,7 +86,7 @@ export abstract class AiProvider {
     const commands = [
       {
         cmd: 'ai.ask',
-        desc: 'ask questions',
+        desc: 'ask MongoDB questions',
         example: 'ai.ask how do I run queries in mongosh?',
       },
       {
@@ -111,8 +111,13 @@ export abstract class AiProvider {
       },
       {
         cmd: 'ai.shell',
-        desc: 'generate general mongosh commands',
+        desc: 'generate administrative mongosh commands',
         example: 'ai.shell get sharding info',
+      },
+      {
+        cmd: 'ai.general',
+        desc: 'use your model for general questions',
+        example: 'ai.general what is the meaning of life?',
       },
       {
         cmd: 'ai.config',
@@ -209,7 +214,7 @@ export abstract class AiProvider {
 
     this.thinking.stop();
     this.setInput(
-      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+      this.formatResponse(response, { expectedOutput: 'mongoshCommand' }),
     );
   }
 
@@ -230,8 +235,22 @@ export abstract class AiProvider {
 
     this.thinking.stop();
     this.setInput(
-      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+      this.formatResponse(response, { expectedOutput: 'mongoshCommand' }),
     );
+  }
+
+  async general(prompt: string): Promise<void> {
+    const signal = AbortSignal.timeout(30_000);
+    this.thinking.start(signal);
+
+    const response = await this.getResponse(prompt, {
+      systemPrompt: 'Give brief answers without any formatting or markdown.',
+      signal,
+      expectedOutput: 'text',
+    });
+
+    this.thinking.stop();
+    this.respond(this.formatResponse(response, { expectedOutput: 'text' }));
   }
 
   async data(prompt: string): Promise<void> {
@@ -252,7 +271,7 @@ export abstract class AiProvider {
 
     this.thinking.stop();
     this.setInput(
-      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+      this.formatResponse(response, { expectedOutput: 'mongoshCommand' }),
     );
   }
 
@@ -274,11 +293,11 @@ export abstract class AiProvider {
 
     this.thinking.stop();
     this.setInput(
-      this.cleanUpResponse(response, { expectedOutput: 'mongoshCommand' }),
+      this.formatResponse(response, { expectedOutput: 'mongoshCommand' }),
     );
   }
 
-  cleanUpResponse(
+  formatResponse(
     text: string,
     {
       expectedOutput,
@@ -322,7 +341,7 @@ export abstract class AiProvider {
     });
 
     this.thinking.stop();
-    this.respond(this.cleanUpResponse(response, { expectedOutput: 'text' }));
+    this.respond(this.formatResponse(response, { expectedOutput: 'text' }));
   }
 
   public clear() {
