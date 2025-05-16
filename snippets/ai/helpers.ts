@@ -49,6 +49,7 @@ export class LoadingAnimation {
 }
 
 export interface CliContext {
+  ai: unknown;
   db: {
     _mongo: {
       _instanceState: {

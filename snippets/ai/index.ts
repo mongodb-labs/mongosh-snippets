@@ -7,6 +7,7 @@ import { Config, ConfigSchema } from './config';
 import { CliContext, wrapAllFunctions } from './helpers';
 import chalk from 'chalk';
 
+
 class AI {
   private readonly replConfig: {
     set: (key: string, value: any) => Promise<void>;
@@ -161,6 +162,5 @@ class AI {
   }
 }
 
-module.exports = (globalThis: any) => {
-  globalThis.ai = new AI(globalThis);
-};
+
+(globalThis as unknown as CliContext).ai = new AI(globalThis as unknown as CliContext);
