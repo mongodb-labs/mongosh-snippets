@@ -315,7 +315,7 @@ export abstract class AiProvider {
         .trim();
     }
 
-    return chalk.blue.bold('Answer: ') + text;
+    return text;
   }
 
   abstract getResponse(

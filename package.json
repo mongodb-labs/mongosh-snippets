@@ -2,7 +2,6 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@types/node": "^22.15.17",
     "bson": "^4.3.0",
     "lerna": "^4.0.0"
   },
