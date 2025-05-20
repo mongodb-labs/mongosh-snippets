@@ -5,12 +5,12 @@ export interface AiCommandOptions {
 export function aiCommand({
   requiresPrompt = true,
 }: AiCommandOptions = {}) {
-  return function decorator<T extends Function>(
+  return function decorator<T extends (...args: string[]) => unknown>(
     value: T,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     context: ClassMethodDecoratorContext
   ): T & { isDirectShellCommand: true } {
-    const wrappedFunction = function(this: any, ...args: any[]) {
+    const wrappedFunction = function(this: unknown, ...args: string[]) {
       if (requiresPrompt === false && args.length > 0) {
         throw new Error('This command does not accept any arguments');
       } else if (requiresPrompt && args.length === 0) {

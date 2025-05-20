@@ -1,4 +1,4 @@
-const _localRequire = <T>(module: string): T => require(module).createRequire(__filename);
+const _localRequire = require('module').createRequire(__filename);
 const localRequire = <T>(module: string): T => _localRequire(module);
 import type { z as ZodType } from 'zod';
 
@@ -19,7 +19,7 @@ const configKeys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
 export type ConfigSchema = ZodType.infer<typeof configSchema>;
 type ConfigKeys = keyof ConfigSchema;
 
-const defaults: Record<ConfigKeys, any> = {
+const defaults: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
   provider: process.env.MONGOSH_AI_PROVIDER ?? 'docs',
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
   includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? true,
@@ -34,11 +34,11 @@ export class Config extends EventEmitter<{
     },
   ];
 }> {
-  private configMap: Record<string, any> = {};
+  private configMap: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = defaults;
 
   constructor(
     private readonly replConfig: {
-      set: (key: string, value: any) => Promise<void>;
+      set: (key: string, value: unknown) => Promise<void>;
       get: <T>(key: string) => Promise<T>;
     },
   ) {
@@ -48,13 +48,13 @@ export class Config extends EventEmitter<{
   async setup(): Promise<void> {
     const keys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
     for (const key of keys) {
-      this.configMap[key] = (await this.replConfig.get(key)) ?? defaults[key];
+      this.configMap[key] ??= (await this.replConfig.get(key));
     }
   }
 
   get<K extends keyof ConfigSchema>(key: K): ConfigSchema[K] {
     this.assertKey(key);
-    return this.configMap[key];
+    return this.configMap[key] as ConfigSchema[K];
   }
 
   assertKey(key: string): asserts key is ConfigKeys {
@@ -65,7 +65,7 @@ export class Config extends EventEmitter<{
     }
   }
 
-  async set(key: ConfigKeys, value: any): Promise<void> {
+  async set(key: ConfigKeys, value: ConfigSchema[ConfigKeys]): Promise<void> {
     this.assertKey(key);
 
     // Validate the value based on the key
@@ -82,9 +82,9 @@ export class Config extends EventEmitter<{
       if (schema._def.typeName === 'ZodEnum') {
         type = `${schema._def.values.join(' | ')}`;
       }
-      const i = (value: any) => inspect(value, {colors: true});
+      const i = (value: unknown) => inspect(value, {colors: true});
 
-      return `  ${i(key)}: ${chalk.white(i(this.configMap[key]))},${type ? chalk.gray(` // ${type}`) : ''}`;
+      return `  ${i(key)}: ${chalk.white(i(this.configMap[key as ConfigKeys]))},${type ? chalk.gray(` // ${type}`) : ''}`;
     });
 
     return `{\n${lines.join('\n')}\n}`;

@@ -7,6 +7,7 @@ const IS_DEBUG = process.env.DEBUG === 'true';
 class Logger extends EventEmitter {
     debug(...args: unknown[]) {
       if (IS_DEBUG) {
+        // eslint-disable-next-line no-console
         console.debug(...args);
         this.emit('debug', ...args);
       }
@@ -14,6 +15,7 @@ class Logger extends EventEmitter {
   
     info(...args: unknown[]) {
       if (IS_DEBUG) {
+        // eslint-disable-next-line no-console
         console.info(...args);
         this.emit('info', ...args);
       }
@@ -21,6 +23,7 @@ class Logger extends EventEmitter {
   
     error(...args: unknown[]) {
       if (IS_DEBUG) {
+        // eslint-disable-next-line no-console
         console.error(...args);
         this.emit('error', ...args);
       }

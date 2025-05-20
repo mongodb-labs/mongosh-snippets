@@ -3,7 +3,7 @@ import type { Config, ConfigSchema } from './config.js';
 import type { CliContext } from './helpers.js';
 import type { Models } from './providers/generic/ai-sdk-provider.js';
 
-module.exports = ((globalThis: CliContext) => {
+module.exports = (async (globalThis: CliContext) => {
   const _localRequire = require('module').createRequire(__filename);
   const localRequire = <T>(module: string): T => _localRequire(module);
 
@@ -16,7 +16,7 @@ module.exports = ((globalThis: CliContext) => {
   const chalk = localRequire<typeof import('chalk')>('chalk');
 class AI {
   private readonly replConfig: {
-    set: (key: string, value: any) => Promise<void>;
+    set: (key: string, value: unknown) => Promise<void>;
     get: <T>(key: string) => Promise<T>;
   };
 
@@ -36,6 +36,7 @@ class AI {
     this.config = new Config(this.replConfig);
 
     // Set up provider change listener
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.config.on('change', async (event) => {
       switch (event.key) {
         case 'provider':
@@ -43,7 +44,7 @@ class AI {
           break;
         case 'model':
             if (!Object.keys(models).includes(this.config.get('provider') as Models)) {
-              if (event.value == 'default') {
+              if (event.value === 'default') {
                 return;
               }
               await this.config.set('model', 'default');
@@ -52,13 +53,13 @@ class AI {
           try {
             this.ai = getAiSdkProvider(
               models[this.config.get('provider') as keyof typeof models](
-                event.value == 'default' ? undefined : event.value as string,
+                event.value === 'default' ? undefined : event.value as string,
               ),
               this.cliContext,
               this.config,
             );
           } catch (error) {
-            throw new Error(`Invalid model, please ensure your name is correct: ${error}`);
+            throw new Error(`Invalid model, please ensure your name is correct: ${error as string}`);
           }
           break;
         default:
@@ -71,10 +72,9 @@ class AI {
     );
     wrapAllFunctions(this.cliContext, this);
 
-    this.setupConfig();
   }
 
-  async setupConfig() {
+  async setup() {
     await this.config.setup();
 
     this.ai = this.getProvider(this.config.get('provider'));
@@ -88,13 +88,14 @@ class AI {
         return getDocsAiProvider(this.cliContext, this.config);
       case 'openai':
       case 'mistral':
-      case 'ollama':
+      case 'ollama': {
         const model = this.config.get('model');
         return getAiSdkProvider(
           models[provider](model === 'default' ? undefined : model),
           this.cliContext,
           this.config,
         );
+      }
       default:
         return new EmptyAiProvider(this.cliContext, this.config);
     }
@@ -131,7 +132,7 @@ class AI {
   }
 
   @aiCommand({requiresPrompt: false})
-  async help() {
+  help() {
     this.ai.help({
       provider: this.config.get('provider'),
       model: this.config.get('model'),
@@ -139,24 +140,24 @@ class AI {
   }
 
   @aiCommand()
-  async clear() {
+  clear() {
     this.ai.clear();
   }
 
   @aiCommand()
-  async collection(name: string) {
-    await this.ai.collection(name);
+  collection(name: string) {
+    this.ai.collection(name);
   }
 
   @aiCommand()
   async provider(provider: string) {
-    this.config.set('provider', provider);
+    await this.config.set('provider', provider);
     this.ai.respond(`Switched to ${chalk.blue(provider)} provider`);
   }
 
   @aiCommand()
   async model(model: string) {
-    this.config.set('model', model);
+    await this.config.set('model', model);
     this.ai.respond(`Switched to ${chalk.blue(model)} model`);
   }
 
@@ -168,4 +169,8 @@ class AI {
 
 
 (globalThis as unknown as CliContext).ai = new AI(globalThis as unknown as CliContext);
+await (globalThis as unknown as {
+  ai: AI;
+}).ai.setup();
+
 });

@@ -5,7 +5,8 @@ const { AiProvider } = localRequire<typeof import('../ai-provider.js')>('../ai-p
 const chalk = localRequire<typeof import('chalk')>('chalk');
 const { DocsChatbotAIService } = localRequire<typeof import('./docs-chatbot-service.js')>('./docs-chatbot-service.js');
 
-import type { CliContext, GetResponseOptions } from '../ai-provider.js';
+import type { GetResponseOptions } from '../ai-provider.js';
+import type { CliContext } from '../../helpers.js';
 import type { Config } from '../../config.js';
 import type { DocsChatbotAIService as DocsChatbotAIServiceType } from './docs-chatbot-service.js';
 
@@ -36,7 +37,7 @@ export class DocsAiProvider extends AiProvider {
 
     const response = await this.aiService.addMessage({
       conversationId: this.docsConversation?.id ?? '',
-      message: prompt,
+      message: systemPrompt ? 'System prompt: ' + systemPrompt + '\n\n User prompt: ' + prompt : prompt,
       signal,
     });
 
@@ -70,52 +71,6 @@ export class DocsAiProvider extends AiProvider {
       this.thinking.stop();
       throw error;
     }
-  }
-
-  async aggregate(prompt: string): Promise<void> {
-    const signal = AbortSignal.timeout(10_000);
-
-    this.thinking.start(signal);
-
-    const wrappedPrompt = `Tell me the mongosh command for aggregating that would fit this prompt: ${prompt}. Do not say anything else. Do not use any formatting. Return the command.`;
-    const response = await this.getResponse(wrappedPrompt, {
-      signal,
-      expectedOutput: 'mongoshCommand',
-    });
-
-    this.thinking.stop();
-
-    this.setInput(response);
-  }
-
-  async query(prompt: string): Promise<void> {
-    const signal = AbortSignal.timeout(10_000);
-
-    this.thinking.start(signal);
-
-    const wrappedPrompt = `${prompt}. Do not say anything else. Do not use any formatting. Return the command.`;
-    const response = await this.getResponse(wrappedPrompt, {
-      signal,
-      expectedOutput: 'mongoshCommand',
-    });
-
-    this.thinking.stop();
-
-    this.setInput(response);
-  }
-
-  async ask(prompt: string): Promise<void> {
-    const signal = AbortSignal.timeout(10_000);
-    this.thinking.start(signal);
-
-    const response = await this.getResponse(prompt, {
-      signal,
-      expectedOutput: 'text',
-    });
-
-    this.thinking.stop();
-
-    this.respond(response);
   }
 }
 

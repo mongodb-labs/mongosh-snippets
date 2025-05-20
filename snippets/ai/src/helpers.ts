@@ -54,15 +54,22 @@ export class LoadingAnimation {
 export interface CliContext {
   ai: unknown;
   db: {
+    _name: string;
+    getCollectionNames: () => Promise<string[]>;
+    getCollection: (name: string) => {
+      aggregate: (pipeline: unknown[]) => Promise<{
+        toArray: () => Promise<Record<string, unknown>[]>;
+      }>;
+    };
     _mongo: {
       _instanceState: {
         evaluationListener: {
-          setConfig: (key: string, value: any) => Promise<void>;
+          setConfig: (key: string, value: unknown) => Promise<void>;
           getConfig: <T>(key: string) => Promise<T>;
         };
-        registerPlugin: (plugin: any) => void;
-        shellApi: Record<string, any>;
-        context: Record<string, any>;
+        registerPlugin: (plugin: unknown) => void;
+        shellApi: Record<string, unknown>;
+        context: Record<string, unknown>;
       };
     };
   };
@@ -70,14 +77,14 @@ export interface CliContext {
 
 export function wrapFunction(
   cliContext: CliContext,
-  instance: any,
+  instance: unknown,
   name: string | undefined,
-  fn: Function,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  fn: (..._args: unknown[]) => Record<string, unknown>,
 ) {
-  const wrapperFn = (...args: string[]) => {
-    return Object.assign(fn(...args), {
-      [Symbol.for('@@mongosh.syntheticPromise')]: true,
-    });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const wrapperFn = (..._args: unknown[]) => {
+    return fn(..._args);
   };
   wrapperFn.isDirectShellCommand = true;
   wrapperFn.returnsPromise = true;
@@ -89,8 +96,14 @@ export function wrapFunction(
   ] = wrapperFn;
 }
 
-export function wrapAllFunctions(cliContext: CliContext, instance: any) {
+export function wrapAllFunctions(cliContext: CliContext, currentInstance: unknown) {
   const instanceState = cliContext.db._mongo._instanceState;
+  const instance = currentInstance as {
+    [key: string]: (...args: unknown[]) => Record<string, unknown> | {
+      isDirectShellCommand: boolean;
+    }
+  };
+
   const methods = Object.getOwnPropertyNames(
     Object.getPrototypeOf(instance),
   ).filter((name) => {
@@ -105,10 +118,12 @@ export function wrapAllFunctions(cliContext: CliContext, instance: any) {
     );
   });
 
+
+
   // for all methods, wrap them with the wrapFunction method
   for (const methodName of methods) {
     const method = instance[methodName];
-    if (typeof method === 'function' && method.isDirectShellCommand) {
+    if (typeof method === 'function' && (method as unknown as { isDirectShellCommand: boolean }).isDirectShellCommand) {
       wrapFunction(cliContext, instance, methodName, method.bind(instance));
     }
   }

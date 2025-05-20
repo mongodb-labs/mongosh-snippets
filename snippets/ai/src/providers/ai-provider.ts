@@ -6,9 +6,7 @@ const chalk = localRequire<typeof import('chalk')>('chalk');
 
 import type { CoreMessage } from 'ai';
 import type { Config } from '../config.js';
-import type { LoadingAnimation as LoadingAnimationType } from '../helpers.js';
-
-export type CliContext = any;
+import type { LoadingAnimation as LoadingAnimationType, CliContext } from '../helpers.js';
 
 export type GetResponseOptions = {
   systemPrompt?: string;
@@ -195,7 +193,7 @@ export abstract class AiProvider {
     );
   }
 
-  async collection(prompt: string | undefined): Promise<void> {
+  collection(prompt: string | undefined): void {
     this.session.collection = prompt;
     this.respond(`Active collection set to ${chalk.blue(prompt ?? 'none')}`);
   }
@@ -360,14 +358,8 @@ export class EmptyAiProvider extends AiProvider {
   readonly setupError =
     'ai snippet has not finished setup yet. Set MONGOSH_AI_PROVIDER={provider} if you need quick setup';
 
-  async getResponse(
-    prompt: string,
-    {
-      systemPrompt,
-    }: {
-      systemPrompt?: string;
-    },
-  ): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getResponse(): Promise<string> {
     throw new Error(this.setupError);
   }
 }

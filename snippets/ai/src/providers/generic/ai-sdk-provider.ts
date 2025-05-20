@@ -51,7 +51,7 @@ export class AiSdkProvider extends AiProvider {
       return aiResponse;
     } catch (error) {
       this.conversation.messages.pop();
-      throw new Error(`Error generating text: ${error}`);
+      throw new Error(`Error generating text: ${error as string}`);
     }
   }
 }

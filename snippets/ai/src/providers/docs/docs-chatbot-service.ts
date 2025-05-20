@@ -9,13 +9,6 @@ const version = '0.0.1';
 
 type Role = 'user' | 'assistant';
 
-type ConversationData = {
-  _id: string;
-  createdAt: string;
-  messages: MessageData[];
-  conversationId: string;
-};
-
 export type MessageData = {
   id: string;
   role: Role;
@@ -25,6 +18,7 @@ export type MessageData = {
   references?: Reference[];
   suggestedPrompts?: string[];
   metadata?: AssistantMessageMetadata;
+  error?: string;
 };
 
 type AssistantMessageMetadata = {
@@ -83,7 +77,9 @@ export class DocsChatbotAIService {
     signal,
   }: {
     signal: AbortSignal;
-  }): Promise<ConversationData> {
+  }): Promise<{
+    conversationId: string;
+  }> {
     const uri = this.getUri('/conversations');
     const res = await this._fetch({
       uri,
@@ -91,18 +87,20 @@ export class DocsChatbotAIService {
       signal,
     });
 
-    let data;
+    let data: MessageData & {
+      _id: string;
+    };
     try {
       data = await res.json();
     } catch (error) {
       throw new Error('[Docs chatbot] Internal server error');
     }
 
-    if (res.status === 400) {
+    if (res.status === 400 && data.error) {
       throw new Error(`[Docs chatbot] Bad request: ${data.error}`);
     }
     if (res.status === 429) {
-      throw new Error(`[Docs chatbot] Rate limited: ${data.error}`);
+      throw new Error(`[Docs chatbot] Rate limited: ${data.error ?? ''}`);
     }
     if (res.status >= 500) {
       log.error(res);
@@ -114,7 +112,6 @@ export class DocsChatbotAIService {
     }
 
     return {
-      ...data,
       conversationId: data._id,
     };
   }
@@ -137,23 +134,23 @@ export class DocsChatbotAIService {
       signal,
     });
 
-    let data;
+    let data: MessageData;
     try {
       data = await res.json();
     } catch (error) {
       throw new Error('[Docs chatbot] Internal server error');
     }
 
-    if (res.status === 400) {
+    if (res.status === 400 && data.error) {
       throw new Error(`[Docs chatbot] Bad request: ${data.error}`);
     }
-    if (res.status === 404) {
+    if (res.status === 404 && data.error) {
       throw new Error(`[Docs chatbot] Conversation not found: ${data.error}`);
     }
-    if (res.status === 429) {
+    if (res.status === 429 && data.error) {
       throw new Error(`[Docs chatbot] Rate limited: ${data.error}`);
     }
-    if (res.status === 504) {
+    if (res.status === 504 && data.error) {
       throw new Error(`[Docs chatbot] Timeout: ${data.error}`);
     }
     if (res.status >= 500) {
@@ -195,13 +192,13 @@ export class DocsChatbotAIService {
       try {
         data = await res.json();
       } catch (error) {
-        throw new Error(`[Docs chatbot] Internal server error: ${error}`);
+        throw new Error(`[Docs chatbot] Internal server error: ${error as string}`);
       }
     }
 
     throw new Error(
       `[Docs chatbot] Internal server error: ${
-        data.error ? data.error : `${res.status} - ${res.statusText}}`
+        data.error ? data.error as string : `${res.status} - ${res.statusText}}`
       }`,
     );
   }
