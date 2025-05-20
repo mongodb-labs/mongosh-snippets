@@ -20,7 +20,7 @@
     "@mongodb-js/devtools-connect": "^3.7.2",
     "@mongodb-js/oidc-plugin": "^1.1.7",
     "ai": "^4.3.15",
-    "chalk": "^5.4.1",
+    "chalk": "^4.1.2",
     "ollama-ai-provider": "^1.2.0",
     "open": "^10.1.2"
   },

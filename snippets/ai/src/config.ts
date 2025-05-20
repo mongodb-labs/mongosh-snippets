@@ -1,11 +1,14 @@
-import { AiProvider } from './providers/ai-provider';
-import { EventEmitter } from 'events';
-import { z } from 'zod';
-import chalk from 'chalk';
-import { inspect } from 'util';
+const _localRequire = <T>(module: string): T => require(module).createRequire(__filename);
+const localRequire = <T>(module: string): T => _localRequire(module);
+import type { z as ZodType } from 'zod';
+
+const z = localRequire<typeof import('zod')>('zod').z;
+const chalk = localRequire<typeof import('chalk')>('chalk');
+const { EventEmitter } = localRequire<typeof import('events')>('events');
+const { inspect } = localRequire<typeof import('util')>('util');
 
 const configSchema = z.object({
-  provider: z.enum(['docs', 'openai', 'mistral', 'atlas', 'ollama']),
+  provider: z.enum(['docs', 'openai', 'mistral', 'ollama']),
   model: z.string(),
   includeSampleDocs: z.boolean(),
   defaultCollection: z.string().optional(),
@@ -13,7 +16,7 @@ const configSchema = z.object({
 
 const configKeys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
 
-export type ConfigSchema = z.infer<typeof configSchema>;
+export type ConfigSchema = ZodType.infer<typeof configSchema>;
 type ConfigKeys = keyof ConfigSchema;
 
 const defaults: Record<ConfigKeys, any> = {

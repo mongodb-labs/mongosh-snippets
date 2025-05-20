@@ -1,5 +1,8 @@
-import chalk from 'chalk';
-import process from 'process';
+const _localRequire = require('module').createRequire(__filename);
+const localRequire = <T>(module: string): T => _localRequire(module);
+
+const chalk = localRequire<typeof import('chalk')>('chalk');
+const process = localRequire<typeof import('process')>('process');
 
 export function output(text: string) {
   process.stdout.write(`${text}`);

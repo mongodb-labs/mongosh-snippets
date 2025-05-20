@@ -1,13 +1,19 @@
-import { aiCommand } from './decorators';
-import { AiProvider, EmptyAiProvider } from './providers/ai-provider';
-import { getAtlasAiProvider } from './providers/atlas/atlas-ai-provider';
-import { getDocsAiProvider } from './providers/docs/docs-ai-provider';
-import { getAiSdkProvider, models } from './providers/generic/ai-sdk-provider';
-import { Config, ConfigSchema } from './config';
-import { CliContext, wrapAllFunctions } from './helpers';
-import chalk from 'chalk';
+import type { AiProvider } from './providers/ai-provider.js';
+import type { Config, ConfigSchema } from './config.js';
+import type { CliContext } from './helpers.js';
+import type { Models } from './providers/generic/ai-sdk-provider.js';
 
+module.exports = ((globalThis: CliContext) => {
+  const _localRequire = require('module').createRequire(__filename);
+  const localRequire = <T>(module: string): T => _localRequire(module);
 
+  const { aiCommand } = localRequire<typeof import('./decorators.js')>('./decorators.js');
+  const { EmptyAiProvider } = localRequire<typeof import('./providers/ai-provider.js')>('./providers/ai-provider.js');
+  const { getDocsAiProvider } = localRequire<typeof import('./providers/docs/docs-ai-provider.js')>('./providers/docs/docs-ai-provider.js');
+  const { getAiSdkProvider, models } = localRequire<typeof import('./providers/generic/ai-sdk-provider.js')>('./providers/generic/ai-sdk-provider.js');
+  const { Config } = localRequire<typeof import('./config.js')>('./config.js');
+  const { wrapAllFunctions } = localRequire<typeof import('./helpers.js')>('./helpers.js');
+  const chalk = localRequire<typeof import('chalk')>('chalk');
 class AI {
   private readonly replConfig: {
     set: (key: string, value: any) => Promise<void>;
@@ -36,7 +42,7 @@ class AI {
           this.ai = this.getProvider(event.value as ConfigSchema['provider']);
           break;
         case 'model':
-            if (!Object.keys(models).includes(this.config.get('provider') as keyof typeof models)) {
+            if (!Object.keys(models).includes(this.config.get('provider') as Models)) {
               if (event.value == 'default') {
                 return;
               }
@@ -80,8 +86,6 @@ class AI {
     switch (provider) {
       case 'docs':
         return getDocsAiProvider(this.cliContext, this.config);
-      case 'atlas':
-        return getAtlasAiProvider(this.cliContext, this.config);
       case 'openai':
       case 'mistral':
       case 'ollama':
@@ -164,3 +168,4 @@ class AI {
 
 
 (globalThis as unknown as CliContext).ai = new AI(globalThis as unknown as CliContext);
+});

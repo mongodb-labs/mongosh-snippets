@@ -1,9 +1,16 @@
-import { AiProvider, CliContext } from '../ai-provider';
-import { CoreMessage, generateText, LanguageModel } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { createMistral } from '@ai-sdk/mistral';
-import { createOllama } from 'ollama-ai-provider';
-import { Config } from '../../config';
+const _localRequire = require('module').createRequire(__filename);
+const localRequire = <T>(module: string): T => _localRequire(module);
+
+const { AiProvider } = localRequire<typeof import('../ai-provider.js')>('../ai-provider.js');
+const {  generateText } = localRequire<typeof import('ai')>('ai');
+const { createOpenAI } = localRequire<typeof import('@ai-sdk/openai')>('@ai-sdk/openai');
+const { createMistral } = localRequire<typeof import('@ai-sdk/mistral')>('@ai-sdk/mistral');
+const { createOllama } = localRequire<typeof import('ollama-ai-provider')>('ollama-ai-provider');
+
+
+import type { Config } from '../../config.js';
+import type { CliContext } from '../../helpers.js';
+import type { LanguageModel } from 'ai';
 
 export class AiSdkProvider extends AiProvider {
   constructor(
@@ -64,6 +71,8 @@ export const models = {
     }).languageModel(model);
   },
 };
+
+export type Models = keyof typeof models;
 
 export function getAiSdkProvider(
   model: LanguageModel,

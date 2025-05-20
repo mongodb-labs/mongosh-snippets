@@ -1,13 +1,19 @@
-import { Config } from '../../config';
-import { AiProvider, CliContext, GetResponseOptions } from '../ai-provider';
-import { DocsChatbotAIService, MessageData } from './docs-chatbot-service';
-import chalk from 'chalk';
+const _localRequire = require('module').createRequire(__filename);
+const localRequire = <T>(module: string): T => _localRequire(module);
+
+const { AiProvider } = localRequire<typeof import('../ai-provider.js')>('../ai-provider.js');
+const chalk = localRequire<typeof import('chalk')>('chalk');
+const { DocsChatbotAIService } = localRequire<typeof import('./docs-chatbot-service.js')>('./docs-chatbot-service.js');
+
+import type { CliContext, GetResponseOptions } from '../ai-provider.js';
+import type { Config } from '../../config.js';
+import type { DocsChatbotAIService as DocsChatbotAIServiceType } from './docs-chatbot-service.js';
 
 export class DocsAiProvider extends AiProvider {
   private docsConversation: { id: string } | null = null;
 
   constructor(
-    private readonly aiService: DocsChatbotAIService,
+    private readonly aiService: DocsChatbotAIServiceType,
     cliContext: CliContext,
     config: Config,
   ) {

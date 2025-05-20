@@ -1,8 +1,12 @@
-import process from 'process';
-import { formatHelpCommands, LoadingAnimation } from '../helpers';
-import chalk from 'chalk';
-import { Config } from '../config';
-import { CoreMessage } from 'ai';
+const _localRequire = require('module').createRequire(__filename);
+const localRequire = <T>(module: string): T => _localRequire(module);
+const process = localRequire<typeof import('process')>('process');
+const { formatHelpCommands, LoadingAnimation } = localRequire<typeof import('../helpers.js')>('../helpers.js');
+const chalk = localRequire<typeof import('chalk')>('chalk');
+
+import type { CoreMessage } from 'ai';
+import type { Config } from '../config.js';
+import type { LoadingAnimation as LoadingAnimationType } from '../helpers.js';
 
 export type CliContext = any;
 
@@ -13,7 +17,7 @@ export type GetResponseOptions = {
 };
 
 export abstract class AiProvider {
-  thinking: LoadingAnimation;
+  thinking: LoadingAnimationType;
   conversation: { messages: CoreMessage[] } = {
     messages: [],
   };
