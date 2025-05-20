@@ -23,21 +23,11 @@ This currently supports 5 different AI providers: `docs, openai | mistral | atla
 You can install this snippet using the `snippet` command in mongosh:
 
 ```javascript
-config.set('snippetIndexSourceURLs',
-'https://github.com/gagik/mongosh-snippets/raw/refs/heads/ai/index.bson.br;'
-+ config.get('snippetIndexSourceURLs') )
+config.set('snippetIndexSourceURLs', config.get('snippetIndexSourceURLs') +
+'; https://github.com/gagik/mongosh-snippets/raw/refs/heads/ai/index.bson.br'
+ )
 snippet install ai
 ```
-
-## Troubleshooting
-
-If you get the error:
-```
-"Error: Cannot find module 'groq-sdk'"
-```
-then, go to your $USER/.mongodb/mongosh/snippets/node_modules/@juananpe/snippets-llm-command folder
-and run `npm install`. Then close and open mongosh again.
-
 
 ## License
 
