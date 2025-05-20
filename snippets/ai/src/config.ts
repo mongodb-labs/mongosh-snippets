@@ -1,11 +1,7 @@
-const _localRequire = require('module').createRequire(__filename);
-const localRequire = <T>(module: string): T => _localRequire(module);
-import type { z as ZodType } from 'zod';
-
-const z = localRequire<typeof import('zod')>('zod').z;
-const chalk = localRequire<typeof import('chalk')>('chalk');
-const { EventEmitter } = localRequire<typeof import('events')>('events');
-const { inspect } = localRequire<typeof import('util')>('util');
+import chalk from 'chalk';
+import EventEmitter from 'events';
+import { inspect } from 'util';
+import { z, type z as ZodType } from 'zod';
 
 const configSchema = z.object({
   provider: z.enum(['docs', 'openai', 'mistral', 'ollama']),

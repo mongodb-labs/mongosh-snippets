@@ -1,12 +1,7 @@
-const _localRequire = require('module').createRequire(__filename);
-const localRequire = <T>(module: string): T => _localRequire(module);
-const process = localRequire<typeof import('process')>('process');
-const { formatHelpCommands, LoadingAnimation } = localRequire<typeof import('../helpers.js')>('../helpers.js');
-const chalk = localRequire<typeof import('chalk')>('chalk');
-
 import type { CoreMessage } from 'ai';
 import type { Config } from '../config.js';
-import type { LoadingAnimation as LoadingAnimationType, CliContext } from '../helpers.js';
+import { type LoadingAnimation as LoadingAnimationType, type CliContext, LoadingAnimation, formatHelpCommands } from '../helpers.js';
+import chalk from 'chalk';
 
 export type GetResponseOptions = {
   systemPrompt?: string;
@@ -144,6 +139,7 @@ export abstract class AiProvider {
       if (collections.length === 1) {
         this.session.collection = collections[0];
         this.respond(
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           `Active collection set to ${chalk.blue(this.session.collection)}. Use ${chalk.yellow('ai.collection')} to set a different collection.`,
         );
       } else {

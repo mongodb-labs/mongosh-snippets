@@ -1,6 +1,4 @@
-const _localRequire = require('module').createRequire(__filename);
-const localRequire = <T>(module: string): T => _localRequire(module);
-const { EventEmitter } = localRequire<typeof import('events')>('events');
+import { EventEmitter } from 'events';
 
 const MONGOSH_AI_IS_DEBUG = process.env.DEBUG === 'true';
 

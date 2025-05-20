@@ -1,9 +1,6 @@
-const _localRequire = require('module').createRequire(__filename);
-const localRequire = <T>(module: string): T => _localRequire(module);
-
-const { AiProvider } = localRequire<typeof import('../ai-provider.js')>('../ai-provider.js');
-const chalk = localRequire<typeof import('chalk')>('chalk');
-const { DocsChatbotAIService } = localRequire<typeof import('./docs-chatbot-service.js')>('./docs-chatbot-service.js');
+import { AiProvider } from '../ai-provider.js';
+import chalk from 'chalk';
+import { DocsChatbotAIService } from './docs-chatbot-service.js';
 
 import type { GetResponseOptions } from '../ai-provider.js';
 import type { CliContext } from '../../helpers.js';
