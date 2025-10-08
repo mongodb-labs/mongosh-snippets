@@ -542,6 +542,31 @@ if (typeof (BinData) != "undefined") {
     BinData.prototype.length = function() {
         return this.len;
     };
+
+    BinData.prototype.nativeToString = BinData.prototype.toString;
+    BinData.prototype.toString = function (encoding) {
+        if (encoding) {
+            return this.nativeToString(encoding);
+        }
+        return `BinData(${this.type}, ${this.base64()})`;
+    };
+
+    BinData.prototype.base64 = function () {
+        return this.toString("base64");
+    };
+    BinData.prototype.hex = function () {
+        return this.toString("hex");
+    };
+    Object.defineProperty(BinData.prototype, "len", {
+        get: function () {
+            return this.buffer ? this.buffer.byteLength : 0;
+        },
+    });
+    Object.defineProperty(BinData.prototype, "type", {
+        get: function () {
+            return this.sub_type;
+        },
+    });
 } else {
     print("warning: no BinData class");
 }
