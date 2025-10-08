@@ -548,7 +548,7 @@ if (typeof (BinData) != "undefined") {
         if (encoding) {
             return this.nativeToString(encoding);
         }
-        return `BinData(${this.type}, ${this.base64()})`;
+        return `BinData(${this.type},"${this.base64()}")`;
     };
 
     BinData.prototype.base64 = function () {
