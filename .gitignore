@@ -22,3 +22,4 @@ tmp/expansions.yaml
 tmp/
 dist.tgz
 mongocryptd.pid
+!package-lock.json

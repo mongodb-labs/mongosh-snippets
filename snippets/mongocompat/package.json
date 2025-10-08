@@ -8,5 +8,11 @@
   "license": "SSPL",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "test": "mongosh --nodb test.js"
+  },
+  "devDependencies": {
+    "mongosh": "^2.5.8"
   }
 }
