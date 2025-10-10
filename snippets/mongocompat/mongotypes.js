@@ -378,8 +378,51 @@ if (!NumberLong.prototype) {
     NumberLong.prototype = {};
 }
 
+NumberLong.prototype.nativeToString = NumberLong.prototype.toString;
+NumberLong.prototype.toString = function () {
+    return `NumberLong(${this.nativeToString()})`;
+};
+
 NumberLong.prototype.tojson = function() {
     return this.toString();
+};
+
+Object.defineProperty(NumberLong.prototype, 'floatApprox', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return Number(this.nativeToString());
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'top', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        const str = this.nativeToString();
+        const bigIntValue = BigInt(str);
+        const unsigned64 = bigIntValue < 0n 
+            ? bigIntValue + (1n << 64n)
+            : bigIntValue;
+        return Number((unsigned64 >> 32n) & 0xFFFFFFFFn);
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'bottom', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        const str = this.nativeToString();
+        const bigIntValue = BigInt(str);
+        const unsigned64 = bigIntValue < 0n 
+            ? bigIntValue + (1n << 64n)
+            : bigIntValue;
+        return Number(unsigned64 & 0xFFFFFFFFn);
+    }
+});
+
+NumberLong.prototype.exactValueString = function() {
+    return this.nativeToString();
 };
 
 // NumberInt
