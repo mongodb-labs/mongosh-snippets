@@ -7,7 +7,6 @@ assert.strictEqual(BinData(4, 'abcdefgh').toString(), 'BinData(4,"abcdefgh")');
 assert.strictEqual(NumberLong(2147483647).toString(), 'NumberLong(2147483647)');
 assert.strictEqual(NumberLong("2147483648").toString(), 'NumberLong("2147483648")');
 assert.strictEqual(NumberLong(-2147483648).toString(), 'NumberLong(-2147483648)');
-console.log(NumberLong(-2147483649).toString());
 assert.strictEqual(NumberLong(-2147483649).toString(), 'NumberLong("-2147483649")');
 assert.strictEqual(NumberLong(9223372036854775807).toString(), 'NumberLong("9223372036854775807")');
 assert.strictEqual(NumberLong(-9223372036854775808).toString(), 'NumberLong("-9223372036854775808")');
