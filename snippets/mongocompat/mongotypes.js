@@ -378,9 +378,56 @@ if (!NumberLong.prototype) {
     NumberLong.prototype = {};
 }
 
+NumberLong.prototype.nativeToString = NumberLong.prototype.toString;
+NumberLong.prototype.toString = function () {
+    const INT32_MIN = -2147483648;
+    const INT32_MAX = 2147483647;
+
+    const numValue = this.toNumber ? this.toNumber() : Number(this);
+    if (numValue >= INT32_MIN && numValue <= INT32_MAX && Number.isInteger(numValue)) {
+        return `NumberLong(${numValue})`;
+    }
+    return `NumberLong("${this.exactValueString}")`;
+};
+
 NumberLong.prototype.tojson = function() {
     return this.toString();
 };
+
+Object.defineProperty(NumberLong.prototype, 'floatApprox', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.toNumber ? this.toNumber() : Number(this);
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'top', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.high;
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'bottom', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.low;
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'exactValueString', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        const high = BigInt(this.high);
+        const low = BigInt(this.low >>> 0);
+        const value = (high << 32n) | low;
+        return value.toString();
+    }
+});
 
 // NumberInt
 if (!NumberInt.prototype) {
