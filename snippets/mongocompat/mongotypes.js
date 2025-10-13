@@ -380,7 +380,14 @@ if (!NumberLong.prototype) {
 
 NumberLong.prototype.nativeToString = NumberLong.prototype.toString;
 NumberLong.prototype.toString = function () {
-    return `NumberLong(${this.nativeToString()})`;
+    const INT32_MIN = -2147483648;
+    const INT32_MAX = 2147483647;
+
+    const numValue = this.toNumber ? this.toNumber() : Number(this);
+    if (numValue >= INT32_MIN && numValue <= INT32_MAX && Number.isInteger(numValue)) {
+        return `NumberLong(${numValue})`;
+    }
+    return `NumberLong("${this.exactValueString}")`;
 };
 
 NumberLong.prototype.tojson = function() {
@@ -391,7 +398,7 @@ Object.defineProperty(NumberLong.prototype, 'floatApprox', {
     enumerable: false,
     configurable: true,
     get: function() {
-        return Number(this.nativeToString());
+        return this.toNumber ? this.toNumber() : Number(this);
     }
 });
 
@@ -399,12 +406,7 @@ Object.defineProperty(NumberLong.prototype, 'top', {
     enumerable: false,
     configurable: true,
     get: function() {
-        const str = this.nativeToString();
-        const bigIntValue = BigInt(str);
-        const unsigned64 = bigIntValue < 0n 
-            ? bigIntValue + (1n << 64n)
-            : bigIntValue;
-        return Number((unsigned64 >> 32n) & 0xFFFFFFFFn);
+        return this.high;
     }
 });
 
@@ -412,18 +414,20 @@ Object.defineProperty(NumberLong.prototype, 'bottom', {
     enumerable: false,
     configurable: true,
     get: function() {
-        const str = this.nativeToString();
-        const bigIntValue = BigInt(str);
-        const unsigned64 = bigIntValue < 0n 
-            ? bigIntValue + (1n << 64n)
-            : bigIntValue;
-        return Number(unsigned64 & 0xFFFFFFFFn);
+        return this.low;
     }
 });
 
-NumberLong.prototype.exactValueString = function() {
-    return this.nativeToString();
-};
+Object.defineProperty(NumberLong.prototype, 'exactValueString', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        const high = BigInt(this.high);
+        const low = BigInt(this.low >>> 0);
+        const value = (high << 32n) | low;
+        return value.toString();
+    }
+});
 
 // NumberInt
 if (!NumberInt.prototype) {
