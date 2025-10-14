@@ -22,3 +22,6 @@ assert.strictEqual(minLong.bottom, 0);
 assert.strictEqual(minLong.exactValueString, "-9223372036854775808");
 const nl2 = NumberLong("200");
 assert.strictEqual(maxLong.compare(nl2), 1);
+const decimal = NumberDecimal("1.1");
+assert.strictEqual(decimal.toString(), 'NumberDecimal("1.1")');
+assert.strictEqual(decimal.tojson(), '1.1');
