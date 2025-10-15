@@ -24,4 +24,4 @@ const nl2 = NumberLong("200");
 assert.strictEqual(maxLong.compare(nl2), 1);
 const decimal = NumberDecimal("1.1");
 assert.strictEqual(decimal.toString(), 'NumberDecimal("1.1")');
-assert.strictEqual(decimal.tojson(), '1.1');
+assert.strictEqual(decimal.tojson(), 'NumberDecimal("1.1")');
