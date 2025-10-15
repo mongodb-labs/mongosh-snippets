@@ -444,6 +444,11 @@ if (typeof NumberDecimal !== 'undefined') {
         NumberDecimal.prototype = {};
     }
 
+    NumberDecimal.prototype.nativeToString = NumberDecimal.prototype.toString
+    NumberDecimal.prototype.toString = function() {
+        return `NumberDecimal("${this.nativeToString()}")`;
+    };
+
     NumberDecimal.prototype.tojson = function() {
         return this.toString();
     };
