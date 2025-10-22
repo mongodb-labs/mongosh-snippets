@@ -2,18 +2,18 @@
 if (typeof (Timestamp) != "undefined") {
     const OriginalTimestamp = Timestamp;
 
-    // Reference: https://github.com/10gen/mongo/blob/master/src/mongo/scripting/mozjs/timestamp.cpp:67-78
+    // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L67-L78
     function validateTimestampComponent(component, name) {
         const MAX_UINT32 = 4294967295; 
 
         if (typeof component !== 'number') {
-            throw new Error(name + " must be a number");
+            throw new TypeError(`${name} must be a number`);
         }
 
         const val = Math.floor(component);
         if (val < 0 || val > MAX_UINT32) {
-            throw new Error(
-                name + " must be non-negative and not greater than " + MAX_UINT32 + ", got " + val
+            throw new TypeError(
+                `${name} must be non-negative and not greater than ${MAX_UINT32}, got ${val}`
             );
         }
 
@@ -28,14 +28,14 @@ if (typeof (Timestamp) != "undefined") {
         if (arguments.length === 1) {
             const proto = Object.getPrototypeOf(t);
             if ((proto === null || proto === Object.prototype) && ('t' in t || 'i' in t)) {
-                var validatedT = validateTimestampComponent(t.t || 0, "Timestamp time (seconds)");
-                var validatedI = validateTimestampComponent(t.i || 0, "Timestamp increment");
+                const validatedT = validateTimestampComponent(t.t || 0, "Timestamp time (seconds)");
+                const validatedI = validateTimestampComponent(t.i || 0, "Timestamp increment");
                 return new OriginalTimestamp({ t: validatedT, i: validatedI });
             }
             return new OriginalTimestamp(t);
         }
 
-        // Reference: https://github.com/10gen/mongo/blob/master/src/mongo/scripting/mozjs/timestamp.cpp:91-98
+        // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L91-L98
         if (arguments.length === 2) {
             const validatedT = validateTimestampComponent(t, "Timestamp time (seconds)");
             const validatedI = validateTimestampComponent(i, "Timestamp increment");
@@ -47,8 +47,7 @@ if (typeof (Timestamp) != "undefined") {
 
     Timestamp.prototype = OriginalTimestamp.prototype;
 
-    var staticProps = Object.getOwnPropertyNames(OriginalTimestamp);
-    for (var key of staticProps) {
+    for (const key of Object.getOwnPropertyNames(OriginalTimestamp)) {
         // Skip prototype, length, name(function internals)
         if (key !== 'prototype' && key !== 'length' && key !== 'name') {
             Timestamp[key] = OriginalTimestamp[key];

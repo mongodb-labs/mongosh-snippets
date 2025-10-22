@@ -46,12 +46,14 @@ try {
     assert(e.message.includes('not greater than 4294967295'));
 }
 const ts4 = Timestamp(123, 456);
+assert(ts4 instanceof Timestamp);
 assert.strictEqual(ts4.toString(), 'Timestamp(123, 456)');
 assert.strictEqual(ts4.tojson(), 'Timestamp(123, 456)');
 assert.strictEqual(ts4.getTime(), 123);
 assert.strictEqual(ts4.getInc(), 456);
 assert.strictEqual(ts4._bsontype, 'Timestamp');
 const tsFromBits = Timestamp.fromBits(100, 200);
+assert(tsFromBits instanceof Timestamp);
 assert.strictEqual(tsFromBits.i, 100);
 assert.strictEqual(tsFromBits.t, 200);
 assert.strictEqual(tsFromBits.toString(), 'Timestamp(200, 100)');
