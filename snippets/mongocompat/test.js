@@ -22,6 +22,51 @@ assert.strictEqual(minLong.bottom, 0);
 assert.strictEqual(minLong.exactValueString, "-9223372036854775808");
 const nl2 = NumberLong("200");
 assert.strictEqual(maxLong.compare(nl2), 1);
+
 const decimal = NumberDecimal("1.1");
 assert.strictEqual(decimal.toString(), 'NumberDecimal("1.1")');
 assert.strictEqual(decimal.tojson(), 'NumberDecimal("1.1")');
+
+const ts1 = Timestamp();
+assert.strictEqual(ts1.toString(), 'Timestamp(0, 0)');
+const ts2 = Timestamp(100, 200);
+assert.strictEqual(ts2.toString(), 'Timestamp(100, 200)');
+const ts3 = Timestamp(1.9, 2.1);
+assert.strictEqual(ts3.toString(), 'Timestamp(1, 2)');
+try {
+    Timestamp(-1, 0);
+    assert.fail('Should throw for negative time');
+} catch (e) {
+    assert(e.message.includes('must be non-negative'));
+}
+try {
+    Timestamp(0, 5000000000);
+    assert.fail('Should throw for i > uint32 max');
+} catch (e) {
+    assert(e.message.includes('not greater than 4294967295'));
+}
+const ts4 = Timestamp(123, 456);
+assert(ts4 instanceof Timestamp);
+assert.strictEqual(ts4.toString(), 'Timestamp(123, 456)');
+assert.strictEqual(ts4.tojson(), 'Timestamp(123, 456)');
+assert.strictEqual(ts4.getTime(), 123);
+assert.strictEqual(ts4.getInc(), 456);
+assert.strictEqual(ts4._bsontype, 'Timestamp');
+const tsFromBits = Timestamp.fromBits(100, 200);
+assert(tsFromBits instanceof Timestamp);
+assert.strictEqual(tsFromBits.i, 100);
+assert.strictEqual(tsFromBits.t, 200);
+assert.strictEqual(tsFromBits.toString(), 'Timestamp(200, 100)');
+const tsFromInt = Timestamp.fromInt(12345);
+assert.strictEqual(tsFromInt._bsontype, 'Timestamp');
+assert.strictEqual(tsFromInt.i, 12345);
+assert.strictEqual(tsFromInt.t, 0);
+const tsFromNum = Timestamp.fromNumber(67890);
+assert.strictEqual(tsFromNum._bsontype, 'Timestamp');
+assert.strictEqual(tsFromNum.i, 67890);
+assert.strictEqual(tsFromNum.t, 0);
+const tsFromStr = Timestamp.fromString('ff', 16);
+assert.strictEqual(tsFromStr.i, 255);
+assert.strictEqual(tsFromStr.t, 0);
+assert.strictEqual(Timestamp.MAX_VALUE._bsontype, 'Long');
+assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE); 
