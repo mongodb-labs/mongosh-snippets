@@ -70,3 +70,14 @@ assert.strictEqual(tsFromStr.i, 255);
 assert.strictEqual(tsFromStr.t, 0);
 assert.strictEqual(Timestamp.MAX_VALUE._bsontype, 'Long');
 assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE); 
+
+const id = ObjectId('68ffa28b77bba38c9ddcf376');
+const dbRef = DBRef('testColl', id, 'testDb');
+assert.strictEqual(dbRef.toString(), 'DBRef("testColl", ObjectId("68ffa28b77bba38c9ddcf376"), "testDb")');
+assert.strictEqual(dbRef.tojson(), 'DBRef("testColl", ObjectId("68ffa28b77bba38c9ddcf376"), "testDb")');
+assert.strictEqual(dbRef.$ref, 'testColl');
+assert.strictEqual(dbRef.$id, id);
+assert.strictEqual(dbRef.$db, 'testDb');
+const dbRefNoDb = DBRef('testColl', id);
+assert.strictEqual(dbRefNoDb.toString(), 'DBRef("testColl", ObjectId("68ffa28b77bba38c9ddcf376"))');
+assert.strictEqual(dbRefNoDb.$db, undefined);

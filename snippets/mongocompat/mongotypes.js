@@ -602,10 +602,10 @@ if (typeof (DBPointer) != "undefined") {
 // DBRef
 if (typeof (DBRef) != "undefined") {
     DBRef.prototype.fetch = function() {
-        assert(this.$ref, "need a ns");
-        assert(this.$id, "need an id");
-        var coll = this.$db ? db.getSiblingDB(this.$db).getCollection(this.$ref) : db[this.$ref];
-        return coll.findOne({_id: this.$id});
+        assert(this.collection, "need a ns");
+        assert(this.oid, "need an id");
+        var coll = this.db ? db.getSiblingDB(this.db).getCollection(this.collection) : db[this.collection];
+        return coll.findOne({_id: this.oid});
     };
 
     DBRef.prototype.tojson = function(indent) {
@@ -613,25 +613,41 @@ if (typeof (DBRef) != "undefined") {
     };
 
     DBRef.prototype.getDb = function() {
-        return this.$db || undefined;
+        return this.db || undefined;
     };
 
     DBRef.prototype.getCollection = function() {
-        return this.$ref;
+        return this.collection;
     };
 
     DBRef.prototype.getRef = function() {
-        return this.$ref;
+        return this.collection;
     };
 
     DBRef.prototype.getId = function() {
-        return this.$id;
+        return this.oid;
     };
 
     DBRef.prototype.toString = function() {
-        return "DBRef(" + tojson(this.$ref) + ", " + tojson(this.$id) +
-            (this.$db ? ", " + tojson(this.$db) : "") + ")";
+        return `DBRef("${this.collection}", ${this.oid.tojson()}` +
+            (this.db ? `, "${this.db}"` : "") + ")";
     };
+
+    Object.defineProperty(DBRef.prototype, "$ref", {
+        get: function () {
+            return this.collection;
+        },
+    });
+    Object.defineProperty(DBRef.prototype, "$id", {
+        get: function () {
+            return this.oid;
+        },
+    });
+    Object.defineProperty(DBRef.prototype, "$db", {
+        get: function () {
+            return this.db;
+        },
+    });
 } else {
     print("warning: no DBRef");
 }
