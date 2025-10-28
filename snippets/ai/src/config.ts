@@ -32,7 +32,7 @@ export class Config extends EventEmitter<{
 }> {
   private configMap: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = defaults;
 
-  constructor(
+  private constructor(
     private readonly replConfig: {
       set: (key: string, value: unknown) => Promise<void>;
       get: <T>(key: string) => Promise<T>;
@@ -41,11 +41,16 @@ export class Config extends EventEmitter<{
     super();
   }
 
-  async setup(): Promise<void> {
+  static async create(replConfig: {
+    set: (key: string, value: unknown) => Promise<void>;
+    get: <T>(key: string) => Promise<T>;
+  }): Promise<Config> {
+    const config = new Config(replConfig);
     const keys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
     for (const key of keys) {
-      this.configMap[key] ??= (await this.replConfig.get(key));
+      config.configMap[key] ??= await replConfig.get(key);
     }
+    return config;
   }
 
   get<K extends keyof ConfigSchema>(key: K): ConfigSchema[K] {
@@ -75,10 +80,10 @@ export class Config extends EventEmitter<{
   [Symbol.for('nodejs.util.inspect.custom')]() {
     const lines = Object.entries(configSchema.shape).map(([key, schema]) => {
       let type: string | undefined = undefined;
-      if (schema._def.typeName === 'ZodEnum') {
-        type = `${schema._def.values.join(' | ')}`;
+      if ('values' in schema.def) {
+        type = `${(schema.def.values as string[]).join(' | ')}`;
       }
-      const i = (value: unknown) => inspect(value, {colors: true});
+      const i = (value: unknown) => inspect(value, { colors: true });
 
       return `  ${i(key)}: ${chalk.white(i(this.configMap[key as ConfigKeys]))},${type ? chalk.gray(` // ${type}`) : ''}`;
     });
