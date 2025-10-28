@@ -629,7 +629,7 @@ if (typeof (DBRef) != "undefined") {
     };
 
     DBRef.prototype.toString = function() {
-        return `DBRef("${this.collection}", ${this.oid.tojson()}` +
+        return `DBRef("${this.collection}", ${tojson(this.oid)}` +
             (this.db ? `, "${this.db}"` : "") + ")";
     };
 
@@ -637,15 +637,24 @@ if (typeof (DBRef) != "undefined") {
         get: function () {
             return this.collection;
         },
+        set: function (value) {
+            this.collection = value;
+        },
     });
     Object.defineProperty(DBRef.prototype, "$id", {
         get: function () {
             return this.oid;
         },
+        set: function (value) {
+            this.oid = value;
+        },
     });
     Object.defineProperty(DBRef.prototype, "$db", {
         get: function () {
             return this.db;
+        },
+        set: function (value) {
+            this.db = value;
         },
     });
 } else {
