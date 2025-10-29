@@ -757,7 +757,9 @@ tojsonObject = function(x, indent, nolint, depth) {
     }
     var lineEnding = nolint ? " " : "\n";
     var tabSpace = nolint ? "" : "\t";
-    assert.eq((typeof x), "object", "tojsonObject needs object, not [" + (typeof x) + "]");
+    if (typeof x !== "object") {
+        throw new TypeError(`tojsonObject needs object, not [${typeof x}]`);
+    }
 
     if (!indent)
         indent = "";

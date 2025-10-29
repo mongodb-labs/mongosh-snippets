@@ -97,3 +97,19 @@ dbRefForSetters.$db = 'newDb';
 assert.strictEqual(dbRefForSetters.$db, 'newDb');
 assert.strictEqual(dbRefForSetters.db, 'newDb');
 assert.strictEqual(dbRefForSetters.toString(), 'DBRef("newColl", ObjectId("507f1f77bcf86cd799439011"), "newDb")');
+
+try {
+    tojsonObject("not an object");
+    assert.fail('Should throw TypeError for string');
+} catch (e) {
+    assert(e instanceof TypeError);
+    assert(e.message.includes('tojsonObject needs object, not [string]'));
+}
+try {
+    tojsonObject(true);
+    assert.fail('Should throw TypeError for boolean');
+} catch (e) {
+    assert(e.message.includes('tojsonObject needs object, not [boolean]'));
+}
+assert.strictEqual(typeof tojsonObject({ key: "value" }), 'string');
+assert.strictEqual(typeof tojsonObject([1, 2, 3]), 'string');
