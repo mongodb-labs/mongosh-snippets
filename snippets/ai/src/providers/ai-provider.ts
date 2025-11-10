@@ -251,30 +251,14 @@ export class AiProvider {
     messages: ModelMessage[],
     { systemPrompt, signal }: Omit<GetResponseOptions, 'expectedOutput'>,
   ): Promise<string> {
-    // Use streaming for docs provider, generateText for others
-    if (this.activeProvider === 'docs') {
-      const result = streamText({
-        model: this.model,
-        messages: messages,
-        system: systemPrompt,
-        abortSignal: signal ?? AbortSignal.timeout(30_000),
-      });
+    const { text } = await generateText({
+      model: this.model,
 
-      let fullText = '';
-      for await (const chunk of result.textStream) {
-        fullText += chunk;
-      }
-      return fullText;
-    } else {
-      const { text } = await generateText({
-        model: this.model,
-
-        messages: messages,
-        system: systemPrompt,
-        abortSignal: signal ?? AbortSignal.timeout(30_000),
-      });
-      return text;
-    }
+      messages: messages,
+      system: systemPrompt,
+      abortSignal: signal ?? AbortSignal.timeout(30_000),
+    });
+    return text;
   }
 
   async processResponse(
@@ -291,27 +275,26 @@ export class AiProvider {
     try {
       let text: string;
 
-      // Use streaming for docs provider, generateText for others
-      if (this.activeProvider === 'docs') {
-        const result = streamText({
-          model: this.model,
-          messages: this.session.messages,
-          system: systemPrompt,
-          abortSignal: signal,
-        });
+      // Use streaming for all providers to show output as it arrives
+      const result = streamText({
+        model: this.model,
+        messages: this.session.messages,
+        system: systemPrompt,
+        abortSignal: signal,
+      });
 
-        text = '';
-        for await (const chunk of result.textStream) {
-          text += chunk;
+      text = '';
+
+      for await (const delta of result.textStream) {
+        if (this.thinking.isRunning) {
+          this.thinking.stop();
+          process.stdout.write(chalk.bold.blue('Response: '));
         }
-      } else {
-        const result = await generateText({
-          model: this.model,
-          messages: this.session.messages,
-          system: systemPrompt,
-          abortSignal: signal,
-        });
-        text = result.text;
+        text += delta;
+        // Output each chunk as it arrives for 'response' mode
+        if (expectedOutput === 'response') {
+          process.stdout.write(delta);
+        }
       }
 
       this.session.messages.push({
@@ -322,13 +305,11 @@ export class AiProvider {
       switch (expectedOutput) {
         case 'command':
           this.setInput(
-            this.formatResponse({ response: text, expectedOutput: 'response' }),
+            this.formatResponse({ response: text, expectedOutput: 'command' }),
           );
           break;
         case 'response':
-          this.respond(
-            this.formatResponse({ response: text, expectedOutput: 'response' }),
-          );
+          // Text already streamed to stdout, no need to call respond
           break;
       }
     } catch (error) {

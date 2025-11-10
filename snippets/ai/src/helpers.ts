@@ -16,6 +16,10 @@ export class LoadingAnimation {
     this.message = message;
   }
 
+  public get isRunning(): boolean {
+    return this.interval !== null;
+  }
+
   start(signal: AbortSignal): void {
     if (this.interval) {
       return;
