@@ -62,6 +62,11 @@ module.exports = async (globalThis: CliContext) => {
     }
 
     @aiCommand()
+    async find(prompt: string) {
+      await this.ai.aggregate(prompt);
+    }
+
+    @aiCommand()
     async ask(prompt: string) {
       await this.ai.processResponse(prompt, {
         systemPrompt:

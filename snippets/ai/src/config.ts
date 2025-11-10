@@ -18,7 +18,7 @@ type ConfigKeys = keyof ConfigSchema;
 const defaults: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
   provider: process.env.MONGOSH_AI_PROVIDER ?? 'docs',
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
-  includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? true,
+  includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? false,
   defaultCollection: process.env.MONGOSH_AI_DEFAULT_COLLECTION,
 };
 

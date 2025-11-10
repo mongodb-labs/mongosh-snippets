@@ -1,4 +1,4 @@
-import { generateText, streamText, LanguageModel, ModelMessage } from 'ai';
+import { streamText, LanguageModel, ModelMessage } from 'ai';
 import type { Config } from '../config.js';
 import {
   type LoadingAnimation as LoadingAnimationType,
@@ -251,13 +251,18 @@ export class AiProvider {
     messages: ModelMessage[],
     { systemPrompt, signal }: Omit<GetResponseOptions, 'expectedOutput'>,
   ): Promise<string> {
-    const { text } = await generateText({
+    const result = streamText({
       model: this.model,
 
       messages: messages,
       system: systemPrompt,
       abortSignal: signal ?? AbortSignal.timeout(30_000),
     });
+
+    let text = '';
+    for await (const delta of result.textStream) {
+      text += delta;
+    }
     return text;
   }
 
