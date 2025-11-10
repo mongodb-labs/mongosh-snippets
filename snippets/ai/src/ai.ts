@@ -37,7 +37,7 @@ module.exports = async (globalThis: CliContext) => {
       const provider = new AiProvider(
         cliContext,
         config,
-        models[config.get('provider') as keyof typeof models](
+        models[config.get('provider')](
           config.get('model') === 'default' ? undefined : config.get('model'),
         ),
       );
@@ -52,18 +52,13 @@ module.exports = async (globalThis: CliContext) => {
     }
 
     @aiCommand()
-    async shell(prompt: string) {
+    async command(prompt: string) {
       await this.ai.shell(prompt);
     }
 
     @aiCommand()
-    async query(prompt: string) {
-      await this.ai.query(prompt);
-    }
-
-    @aiCommand()
-    async aggregate(prompt: string) {
-      await this.ai.aggregate(prompt);
+    async cmd(prompt: string) {
+      await this.command(prompt);
     }
 
     @aiCommand()
@@ -84,24 +79,19 @@ module.exports = async (globalThis: CliContext) => {
           example: 'ai.ask how do I run queries in mongosh?',
         },
         {
-          cmd: 'ai.query',
-          desc: 'generate a MongoDB query',
-          example: 'ai.query find documents where name = "Ada"',
-        },
-        {
-          cmd: 'ai.aggregate',
-          desc: 'generate a MongoDB aggregation',
-          example: 'ai.aggregate find documents where name = "Ada"',
+          cmd: 'ai.find',
+          desc: 'generate a MongoDB query or aggregation',
+          example: 'ai.find documents where name = "Ada"',
         },
         {
           cmd: 'ai.collection',
           desc: 'set the active collection',
-          example: 'ai.collection("users")',
+          example: 'ai.collection users',
         },
         {
-          cmd: 'ai.shell',
-          desc: 'generate administrative mongosh commands',
-          example: 'ai.shell insert a new sample document',
+          cmd: 'ai.command',
+          desc: `Generate mongosh commands`,
+          example: 'ai.command insert a new sample document | alias: ai.cmd',
         },
         {
           cmd: 'ai.config',

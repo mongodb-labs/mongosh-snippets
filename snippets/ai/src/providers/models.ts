@@ -8,9 +8,7 @@ export const models = {
       baseURL: 'https://knowledge.mongodb.com/api/v1',
       apiKey: '',
       headers: {
-        // TODO: Change to actual origin
         'X-Request-Origin': 'mongodb-compass',
-        origin: 'mongodb-compass',
         'user-agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) MongoDBCompass/1.47.0 Chrome/138.0.7204.251 Electron/37.6.0 Safari/537.36',
       },
@@ -31,12 +29,12 @@ export const models = {
   },
   mistral(model = 'mistral-small-latest') {
     return createMistral({
-      apiKey: process.env.MONGOSH_AI_API_KEY,
+      apiKey: process.env.MONGOSH_AI_MISTRAL_API_KEY,
     }).languageModel(model);
   },
   openai(model = 'gpt-4.1-mini') {
     return createOpenAI({
-      apiKey: process.env.MONGOSH_AI_API_KEY,
+      apiKey: process.env.MONGOSH_AI_OPENAI_API_KEY,
     }).languageModel(model);
   },
 };

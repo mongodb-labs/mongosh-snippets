@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import chalk from 'chalk';
 
 export function output(text: string) {
   process.stdout.write(`${text}`);
@@ -92,12 +92,17 @@ export function wrapFunction(
   ] = wrapperFn;
 }
 
-export function wrapAllFunctions(cliContext: CliContext, currentInstance: unknown) {
+export function wrapAllFunctions(
+  cliContext: CliContext,
+  currentInstance: unknown,
+) {
   const instanceState = cliContext.db._mongo._instanceState;
   const instance = currentInstance as {
-    [key: string]: (...args: unknown[]) => Record<string, unknown> | {
-      isDirectShellCommand: boolean;
-    }
+    [key: string]: (...args: unknown[]) =>
+      | Record<string, unknown>
+      | {
+          isDirectShellCommand: boolean;
+        };
   };
 
   const methods = Object.getOwnPropertyNames(
@@ -114,12 +119,14 @@ export function wrapAllFunctions(cliContext: CliContext, currentInstance: unknow
     );
   });
 
-
-
   // for all methods, wrap them with the wrapFunction method
   for (const methodName of methods) {
     const method = instance[methodName];
-    if (typeof method === 'function' && (method as unknown as { isDirectShellCommand: boolean }).isDirectShellCommand) {
+    if (
+      typeof method === 'function' &&
+      (method as unknown as { isDirectShellCommand: boolean })
+        .isDirectShellCommand
+    ) {
       wrapFunction(cliContext, instance, methodName, method.bind(instance));
     }
   }
@@ -146,13 +153,14 @@ export function formatHelpCommands(
   const formattedCommands = commands
     .map((c) => {
       const padding = ' '.repeat(maxCmdLength - c.cmd.length);
-      const base = `  ${chalk.yellow(c.cmd)}${padding} ${chalk.white(c.desc)}`;
+      const base = `  ${chalk.cyan(c.cmd)}${padding} ${chalk.white(c.desc)}`;
       return c.example ? `${base} ${chalk.gray(`| ${c.example}`)}` : base;
     })
     .join('\n');
 
-  return `${chalk.blue.bold('AI command suite for mongosh')}
-${chalk.gray(`Collection: ${chalk.white.bold(collection ?? 'not set')}. Set it with ai.collection("collection_name")`)}\n
+  return `${chalk.cyan.bold('mongosh AI snippet')}
+${chalk.yellow.bold('Note: This snippet is experimental and not meant for production use.')}
+${chalk.gray(`Collection: ${chalk.white.bold(collection ?? 'not set')}. Set it with ${chalk.white.bold('ai.collection("collection_name")')}`)}\n
 ${formattedCommands}\n
 ${chalk.gray(`Using ${chalk.white.bold(provider)} as provider and its ${chalk.white.bold(model)} model`)}
   `.trim();

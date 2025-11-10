@@ -229,20 +229,6 @@ export class AiProvider {
     });
   }
 
-  async query(prompt: string): Promise<void> {
-    const signal = AbortSignal.timeout(30_000);
-    await this.ensureCollectionName(prompt);
-
-    await this.processResponse(prompt, {
-      systemPrompt: await this.getSystemPrompt(
-        "You generate the exact valid mongosh command that matches the user's request.",
-        { includeSampleDocs: true },
-      ),
-      signal,
-      expectedOutput: 'command',
-    });
-  }
-
   private formatResponse({
     response,
     expectedOutput,
