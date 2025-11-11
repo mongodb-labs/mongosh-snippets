@@ -1,6 +1,6 @@
 {
   "name": "@gagik.co/snippet-ai",
-  "snippetName": "experimental-ai",
+  "snippetName": "ai",
   "version": "0.0.11",
   "description": "Provides a ai command suite for mongosh to ask for MongoDB query expressions in natural language.",
   "author": "Gagik Amaryan",
