@@ -310,16 +310,29 @@ export class AiProvider {
       });
 
       text = '';
+      const sources: {
+        title: string;
+        url: string;
+      }[] = [];
 
-      for await (const delta of result.textStream) {
-        if (this.thinking.isRunning) {
-          this.thinking.stop();
-          process.stdout.write(chalk.bold.blue('Response: '));
-        }
-        text += delta;
-        // Output each chunk as it arrives for 'response' mode
-        if (expectedOutput === 'response') {
-          process.stdout.write(delta);
+      for await (const delta of result.fullStream) {
+        if (
+          delta.type === 'source' &&
+          delta.sourceType === 'url' &&
+          delta.title &&
+          delta.url
+        ) {
+          sources.push({ title: delta.title, url: delta.url });
+        } else if (delta.type === 'text-delta') {
+          if (this.thinking.isRunning && expectedOutput === 'response') {
+            this.thinking.stop();
+            process.stdout.write(chalk.bold.blue('Response: '));
+          }
+          text += delta.text;
+          // Output each chunk as it arrives for 'response' mode
+          if (expectedOutput === 'response') {
+            process.stdout.write(delta.text);
+          }
         }
       }
 
@@ -328,8 +341,17 @@ export class AiProvider {
         content: text,
       });
 
+      if (sources.length > 0) {
+        process.stdout.write(
+          '\n' +
+            chalk.italic.gray('Related Resources: ') +
+            sources.map((source) => chalk.gray(`${source.url}`)).join(', '),
+        );
+      }
+
       switch (expectedOutput) {
         case 'command':
+          this.thinking.stop();
           this.setInput(
             this.formatResponse({ response: text, expectedOutput: 'command' }),
           );
