@@ -93,8 +93,24 @@ export class AiProvider {
     if (/[\n\r]/.test(trimmedText)) {
       // If the text includes a newline or carriage return, we should enter editor mode first
       process.stdin.unshift('.editor\n', 'utf-8');
+      // Add backspace characters to remove indentation carried over from previous lines
+      const lines = trimmedText.split(/\r?\n/);
+      let result = lines[0]; // First line doesn't need any backspaces
+
+      for (let i = 1; i < lines.length; i++) {
+        // Count leading whitespace from the previous line
+        const previousLineLeadingWhitespace =
+          lines[i - 1].match(/^\s*/)?.[0].length ?? 0;
+        result += '\n';
+        // Add backspace characters to remove carried-over indentation
+        result += '\x08'.repeat(previousLineLeadingWhitespace);
+        result += lines[i];
+      }
+
+      process.stdin.unshift(result, 'utf-8');
+    } else {
+      process.stdin.unshift(trimmedText, 'utf-8');
     }
-    process.stdin.unshift(trimmedText, 'utf-8');
   }
   /** @internal */
   respond(text: string) {
@@ -177,8 +193,10 @@ export class AiProvider {
     systemPrompt: string,
     {
       includeSampleDocs = false,
+      expectedOutput,
     }: {
       includeSampleDocs?: boolean;
+      expectedOutput?: GetResponseOptions['expectedOutput'];
     },
   ): Promise<string> {
     return (
@@ -193,6 +211,9 @@ export class AiProvider {
         ? `Sample documents from ${this.cliContext.db._name}.${this.session.collection}: ${JSON.stringify(
             await this.getSampleDocuments(this.session.collection),
           )}. Skip the use command to switch to the database, it is already set.`
+        : '') +
+      (expectedOutput === 'command'
+        ? `Expected output is meant to be just a mongo shell, no explanation or formatting.`
         : '')
     );
   }
@@ -208,7 +229,7 @@ export class AiProvider {
 
     await this.processResponse(prompt, {
       systemPrompt: await this.getSystemPrompt(
-        "You generate the exact mongosh aggregate command that matches the user's request",
+        "You generate the exact mongosh aggregate command that matches the user's request. The message specifies the requirements to find and/or aggregate the documents by.",
         { includeSampleDocs: true },
       ),
       signal,
