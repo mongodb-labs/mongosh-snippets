@@ -129,7 +129,9 @@ Date.prototype.tojson = function() {
         ofs + '")';
 };
 
-ISODate = function(isoDateStr) {
+if (buildInfo().version.split('.').reverse().map((x,i) => parseInt(x) * Math.pow(10,3*i)).reduce((sum, x) => sum + x, 0) < 2003001) {
+  // Not needed anymore in version 2.3.1 or later
+  ISODate = function(isoDateStr) {
     if (!isoDateStr)
         return new Date();
 
@@ -175,7 +177,8 @@ ISODate = function(isoDateStr) {
         throw Error("invalid ISO date: " + isoDateStr);
 
     return new Date(time);
-};
+  };
+}
 
 // Regular Expression
 RegExp.escape = function(text) {
@@ -520,12 +523,14 @@ ObjectId.prototype.tojson = function() {
     return this.toString();
 };
 
-Object.defineProperty(ObjectId.prototype, 'str', {
-  enumerable: true,
-  get() {
-    return this.toHexString();
-  }
-});
+if (!ObjectId.prototype.hasOwnProperty('str')) {
+  Object.defineProperty(ObjectId.prototype, 'str', {
+    enumerable: true,
+    get() {
+      return this.toHexString();
+    }
+  });
+}
 
 ObjectId.prototype.valueOf = function() {
     return this.str;
@@ -742,8 +747,8 @@ tojson = function(x, indent, nolint, depth) {
             return s;
         }
         case "function":
-            if (x === MinKey || x === MaxKey)
-                return x.tojson();
+            if (x === MinKey) return tojson({ "$minKey" : 1 });
+            if (x === MaxKey) return tojson({ "$maxKey" : 1 });
             return x.toString();
         default:
             throw Error("tojson can't handle type " + (typeof x));
@@ -806,7 +811,7 @@ tojsonObject = function(x, indent, nolint, depth) {
         if (typeof DBCollection != 'undefined' && val == DBCollection.prototype)
             continue;
 
-        fieldStrings.push(indent + "\"" + k + "\" : " + tojson(val, indent, nolint, depth + 1));
+        fieldStrings.push(indent + k + ": " + tojson(val, indent, nolint, depth + 1));
     }
 
     if (fieldStrings.length > 0) {
