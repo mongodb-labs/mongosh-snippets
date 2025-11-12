@@ -8,9 +8,10 @@ export const models = {
       baseURL: 'https://knowledge.mongodb.com/api/v1',
       apiKey: '',
       headers: {
+        // https://jira.mongodb.org/browse/EAI-1411
         'X-Request-Origin': 'mongodb-compass',
         'user-agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) MongoDBCompass/1.47.0 Chrome/138.0.7204.251 Electron/37.6.0 Safari/537.36',
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) mongosh/1.47.0 Chrome/138.0.7204.251 Electron/37.6.0 Safari/537.36',
       },
       fetch: (url, options) => {
         return fetch(url, {
