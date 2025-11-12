@@ -8,6 +8,24 @@ assert.strictEqual(NumberLong(2147483647).toString(), 'NumberLong(2147483647)');
 assert.strictEqual(NumberLong("2147483648").toString(), 'NumberLong("2147483648")');
 assert.strictEqual(NumberLong(-2147483648).toString(), 'NumberLong(-2147483648)');
 assert.strictEqual(NumberLong(-2147483649).toString(), 'NumberLong("-2147483649")');
+
+const int1 = NumberInt(42);
+assert.strictEqual(int1.toString(), 'NumberInt(42)');
+assert.strictEqual(int1.tojson(), 'NumberInt(42)');
+assert.strictEqual(int1.toNumber(), 42);
+assert.strictEqual(int1.valueOf(), 42);
+assert.strictEqual(int1.toJSON(), 42);
+const int2 = NumberInt(-100);
+assert.strictEqual(int2.toString(), 'NumberInt(-100)');
+assert.strictEqual(int2.tojson(), 'NumberInt(-100)');
+assert.strictEqual(int2.toNumber(), -100);
+const maxInt32 = NumberInt(2147483647);
+assert.strictEqual(maxInt32.toString(), 'NumberInt(2147483647)');
+assert.strictEqual(maxInt32.toNumber(), 2147483647);
+const minInt32 = NumberInt(-2147483648);
+assert.strictEqual(minInt32.toString(), 'NumberInt(-2147483648)');
+assert.strictEqual(minInt32.toNumber(), -2147483648);
+
 assert.strictEqual(NumberLong(9223372036854775807).toString(), 'NumberLong("9223372036854775807")');
 assert.strictEqual(NumberLong(-9223372036854775808).toString(), 'NumberLong("-9223372036854775808")');
 const maxLong = NumberLong(9223372036854775807, 2147483647, -1);

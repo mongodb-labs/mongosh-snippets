@@ -487,9 +487,15 @@ Object.defineProperty(NumberLong.prototype, 'exactValueString', {
 if (!NumberInt.prototype) {
     NumberInt.prototype = {};
 }
-
+NumberInt.prototype.nativeToString = NumberInt.prototype.toString;
+NumberInt.prototype.toString = function() {
+    return `NumberInt(${this.valueOf()})`;
+};
 NumberInt.prototype.tojson = function() {
     return this.toString();
+};
+NumberInt.prototype.toNumber = function() {
+    return this.valueOf();
 };
 
 // NumberDecimal
