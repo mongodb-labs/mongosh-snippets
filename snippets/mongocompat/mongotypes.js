@@ -714,6 +714,41 @@ if (typeof (gc) == "undefined") {
     };
 }
 
+// MinKey
+if (typeof (MinKey) != "undefined") {
+    const OriginalMinKey = MinKey;
+    MinKey = function () {
+        if (MinKey.prototype.__instance__ === undefined) {
+            MinKey.prototype.__instance__ = new OriginalMinKey();
+        }
+
+        return MinKey.prototype.__instance__;
+    };
+
+    MinKey.prototype = OriginalMinKey.prototype;
+
+    for (const key of Object.getOwnPropertyNames(OriginalMinKey)) {
+        // Skip prototype, length, name(function internals)
+        if (key !== 'prototype' && key !== 'length' && key !== 'name') {
+            MinKey[key] = OriginalMinKey[key];
+        }
+    }
+
+    MinKey.prototype.toJSON = function () {
+        return this.tojson();
+    };
+
+    MinKey.prototype.tojson = function () {
+        return "{ \"$minKey\" : 1 }";
+    };
+
+    MinKey.prototype.toString = function () {
+        return "[object Function]";
+    };
+} else {
+    print("warning: no MinKey class");
+}
+
 // Free Functions
 tojsononeline = function(x) {
     return tojson(x, " ", true);

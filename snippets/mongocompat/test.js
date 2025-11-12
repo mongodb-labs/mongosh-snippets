@@ -87,7 +87,7 @@ const tsFromStr = Timestamp.fromString('ff', 16);
 assert.strictEqual(tsFromStr.i, 255);
 assert.strictEqual(tsFromStr.t, 0);
 assert.strictEqual(Timestamp.MAX_VALUE._bsontype, 'Long');
-assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE); 
+assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE);
 
 const id = ObjectId('68ffa28b77bba38c9ddcf376');
 const dbRef = DBRef('testColl', id, 'testDb');
@@ -161,3 +161,15 @@ assert(sortedArrayJson.indexOf('"a"') < sortedArrayJson.indexOf('"z"'), 'Array.t
 assert(sortedArrayJson.indexOf('"b"') < sortedArrayJson.indexOf('"y"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
 assert(unsortedArrayJson.indexOf('"z"') < unsortedArrayJson.indexOf('"a"'), 'Array.tojson with sortedKeys=false should not sort keys');
 assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array.tojson without sortedKeys should not sort keys');
+
+// Test MinKey
+const minKey = new MinKey();
+assert(minKey instanceof MinKey, "minKey should be an instance of MinKey");
+assert.strictEqual(minKey.tojson(), '{ "$minKey" : 1 }', "minKey should serialize correctly");
+assert.strictEqual(minKey.toString(), "[object Function]", "minKey toString should work");
+assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }', "minKey toJSON should work");
+
+// Test that multiple references return the same instance
+const anotherMinKeyRef = new MinKey();
+assert.strictEqual(minKey, anotherMinKeyRef, "minKey should be a singleton - v1");
+assert.strictEqual(MinKey(), MinKey(), "minKey should be a singleton - v2");
