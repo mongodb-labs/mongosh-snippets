@@ -7,7 +7,8 @@
   },
   "scripts": {
     "make-index": "node scripts/make-index",
-    "show-index": "node scripts/show-index"
+    "show-index": "node scripts/show-index",
+    "test": "lerna run test"
   },
   "homepage": "https://github.com/mongodb-labs/mongosh-snippets",
   "repository": {
@@ -16,5 +17,8 @@
   },
   "bugs": {
     "url": "https://github.com/mongodb-labs/mongosh-snippets/issues"
+  },
+  "overrides": {
+    "node-gyp": "^11.4.2"
   }
 }

@@ -1,12 +1,18 @@
 {
   "name": "@mongosh/snippet-mongocompat",
   "snippetName": "mongocompat",
-  "version": "1.0.9",
+  "version": "1.0.16",
   "description": "mongo compatibility script for mongosh",
   "main": "index.js",
   "errorMatchers": "error-matchers.js",
   "license": "SSPL",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "test": "mongosh --nodb test.js"
+  },
+  "devDependencies": {
+    "mongosh": "^2.5.8"
   }
 }

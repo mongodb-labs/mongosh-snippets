@@ -1,5 +1,59 @@
 // Date and time types
 if (typeof (Timestamp) != "undefined") {
+    const OriginalTimestamp = Timestamp;
+
+    // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L67-L78
+    function validateTimestampComponent(component, name) {
+        const MAX_UINT32 = 4294967295; 
+
+        if (typeof component !== 'number') {
+            throw new TypeError(`${name} must be a number`);
+        }
+
+        const val = Math.floor(component);
+        if (val < 0 || val > MAX_UINT32) {
+            throw new TypeError(
+                `${name} must be non-negative and not greater than ${MAX_UINT32}, got ${val}`
+            );
+        }
+
+        return val;
+    }
+
+    Timestamp = function(t, i) {
+        if (arguments.length === 0) {
+            return new OriginalTimestamp({ t: 0, i: 0 });
+        }
+
+        if (arguments.length === 1) {
+            const proto = Object.getPrototypeOf(t);
+            if ((proto === null || proto === Object.prototype) && ('t' in t || 'i' in t)) {
+                const validatedT = validateTimestampComponent(t.t || 0, "Timestamp time (seconds)");
+                const validatedI = validateTimestampComponent(t.i || 0, "Timestamp increment");
+                return new OriginalTimestamp({ t: validatedT, i: validatedI });
+            }
+            return new OriginalTimestamp(t);
+        }
+
+        // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L91-L98
+        if (arguments.length === 2) {
+            const validatedT = validateTimestampComponent(t, "Timestamp time (seconds)");
+            const validatedI = validateTimestampComponent(i, "Timestamp increment");
+            return new OriginalTimestamp({ t: validatedT, i: validatedI });
+        }
+
+        throw new Error("Timestamp needs 0 or 2 arguments");
+    };
+
+    Timestamp.prototype = OriginalTimestamp.prototype;
+
+    for (const key of Object.getOwnPropertyNames(OriginalTimestamp)) {
+        // Skip prototype, length, name(function internals)
+        if (key !== 'prototype' && key !== 'length' && key !== 'name') {
+            Timestamp[key] = OriginalTimestamp[key];
+        }
+    }
+
     Timestamp.prototype.tojson = function() {
         return this.toStringIncomparable();
     };
@@ -378,9 +432,56 @@ if (!NumberLong.prototype) {
     NumberLong.prototype = {};
 }
 
+NumberLong.prototype.nativeToString = NumberLong.prototype.toString;
+NumberLong.prototype.toString = function () {
+    const INT32_MIN = -2147483648;
+    const INT32_MAX = 2147483647;
+
+    const numValue = this.toNumber ? this.toNumber() : Number(this);
+    if (numValue >= INT32_MIN && numValue <= INT32_MAX && Number.isInteger(numValue)) {
+        return `NumberLong(${numValue})`;
+    }
+    return `NumberLong("${this.exactValueString}")`;
+};
+
 NumberLong.prototype.tojson = function() {
     return this.toString();
 };
+
+Object.defineProperty(NumberLong.prototype, 'floatApprox', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.toNumber ? this.toNumber() : Number(this);
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'top', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.high;
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'bottom', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        return this.low;
+    }
+});
+
+Object.defineProperty(NumberLong.prototype, 'exactValueString', {
+    enumerable: false,
+    configurable: true,
+    get: function() {
+        const high = BigInt(this.high);
+        const low = BigInt(this.low >>> 0);
+        const value = (high << 32n) | low;
+        return value.toString();
+    }
+});
 
 // NumberInt
 if (!NumberInt.prototype) {
@@ -396,6 +497,11 @@ if (typeof NumberDecimal !== 'undefined') {
     if (!NumberDecimal.prototype) {
         NumberDecimal.prototype = {};
     }
+
+    NumberDecimal.prototype.nativeToString = NumberDecimal.prototype.toString
+    NumberDecimal.prototype.toString = function() {
+        return `NumberDecimal("${this.nativeToString()}")`;
+    };
 
     NumberDecimal.prototype.tojson = function() {
         return this.toString();
@@ -496,10 +602,10 @@ if (typeof (DBPointer) != "undefined") {
 // DBRef
 if (typeof (DBRef) != "undefined") {
     DBRef.prototype.fetch = function() {
-        assert(this.$ref, "need a ns");
-        assert(this.$id, "need an id");
-        var coll = this.$db ? db.getSiblingDB(this.$db).getCollection(this.$ref) : db[this.$ref];
-        return coll.findOne({_id: this.$id});
+        assert(this.collection, "need a ns");
+        assert(this.oid, "need an id");
+        var coll = this.db ? db.getSiblingDB(this.db).getCollection(this.collection) : db[this.collection];
+        return coll.findOne({_id: this.oid});
     };
 
     DBRef.prototype.tojson = function(indent) {
@@ -507,25 +613,50 @@ if (typeof (DBRef) != "undefined") {
     };
 
     DBRef.prototype.getDb = function() {
-        return this.$db || undefined;
+        return this.db || undefined;
     };
 
     DBRef.prototype.getCollection = function() {
-        return this.$ref;
+        return this.collection;
     };
 
     DBRef.prototype.getRef = function() {
-        return this.$ref;
+        return this.collection;
     };
 
     DBRef.prototype.getId = function() {
-        return this.$id;
+        return this.oid;
     };
 
     DBRef.prototype.toString = function() {
-        return "DBRef(" + tojson(this.$ref) + ", " + tojson(this.$id) +
-            (this.$db ? ", " + tojson(this.$db) : "") + ")";
+        return `DBRef("${this.collection}", ${tojson(this.oid)}` +
+            (this.db ? `, "${this.db}"` : "") + ")";
     };
+
+    Object.defineProperty(DBRef.prototype, "$ref", {
+        get: function () {
+            return this.collection;
+        },
+        set: function (value) {
+            this.collection = value;
+        },
+    });
+    Object.defineProperty(DBRef.prototype, "$id", {
+        get: function () {
+            return this.oid;
+        },
+        set: function (value) {
+            this.oid = value;
+        },
+    });
+    Object.defineProperty(DBRef.prototype, "$db", {
+        get: function () {
+            return this.db;
+        },
+        set: function (value) {
+            this.db = value;
+        },
+    });
 } else {
     print("warning: no DBRef");
 }
@@ -542,6 +673,31 @@ if (typeof (BinData) != "undefined") {
     BinData.prototype.length = function() {
         return this.len;
     };
+
+    BinData.prototype.nativeToString = BinData.prototype.toString;
+    BinData.prototype.toString = function (encoding) {
+        if (encoding) {
+            return this.nativeToString(encoding);
+        }
+        return `BinData(${this.type},"${this.base64()}")`;
+    };
+
+    BinData.prototype.base64 = function () {
+        return this.toString("base64");
+    };
+    BinData.prototype.hex = function () {
+        return this.toString("hex");
+    };
+    Object.defineProperty(BinData.prototype, "len", {
+        get: function () {
+            return this.buffer ? this.buffer.byteLength : 0;
+        },
+    });
+    Object.defineProperty(BinData.prototype, "type", {
+        get: function () {
+            return this.sub_type;
+        },
+    });
 } else {
     print("warning: no BinData class");
 }
@@ -601,7 +757,9 @@ tojsonObject = function(x, indent, nolint, depth) {
     }
     var lineEnding = nolint ? " " : "\n";
     var tabSpace = nolint ? "" : "\t";
-    assert.eq((typeof x), "object", "tojsonObject needs object, not [" + (typeof x) + "]");
+    if (typeof x !== "object") {
+        throw new TypeError(`tojsonObject needs object, not [${typeof x}]`);
+    }
 
     if (!indent)
         indent = "";
