@@ -85,7 +85,7 @@ module.exports = async (globalThis: CliContext) => {
         },
         {
           cmd: 'ai.find',
-          desc: 'generate a MongoDB query or aggregation',
+          desc: 'generate a query or aggregation',
           example: 'ai.find documents where name = "Ada"',
         },
         {
@@ -95,7 +95,7 @@ module.exports = async (globalThis: CliContext) => {
         },
         {
           cmd: 'ai.command',
-          desc: `Generate mongosh commands`,
+          desc: `generate mongosh commands`,
           example: 'ai.command insert a new sample document | alias: ai.cmd',
         },
         {
