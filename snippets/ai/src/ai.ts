@@ -52,13 +52,8 @@ module.exports = async (globalThis: CliContext) => {
     }
 
     @aiCommand()
-    async command(prompt: string) {
-      await this.ai.shell(prompt);
-    }
-
-    @aiCommand()
     async cmd(prompt: string) {
-      await this.command(prompt);
+      await this.ai.shell(prompt);
     }
 
     @aiCommand()
@@ -94,9 +89,9 @@ module.exports = async (globalThis: CliContext) => {
           example: 'ai.collection users',
         },
         {
-          cmd: 'ai.command',
+          cmd: 'ai.cmd',
           desc: `generate mongosh commands`,
-          example: 'ai.command insert a new sample document | alias: ai.cmd',
+          example: 'ai.cmd insert a new sample document',
         },
         {
           cmd: 'ai.config',
