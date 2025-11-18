@@ -131,3 +131,33 @@ try {
 }
 assert.strictEqual(typeof tojsonObject({ key: "value" }), 'string');
 assert.strictEqual(typeof tojsonObject([1, 2, 3]), 'string');
+
+// Test sortedkey parameter
+const unsortedObj = { z: 1, a: 2, m: 3 };
+const sortedJson = tojson(unsortedObj, "", true, 0, true);
+const unsortedJson = tojson(unsortedObj, "", true, 0, false);
+const defaultJson = tojson(unsortedObj);
+assert(sortedJson.indexOf('"a"') < sortedJson.indexOf('"m"'), 'sortedJson should be sorted alphabetically');
+assert(sortedJson.indexOf('"m"') < sortedJson.indexOf('"z"'), 'sortedJson should be sorted alphabetically');
+assert(unsortedJson.indexOf('"z"') < unsortedJson.indexOf('"a"'), 'unsortedJson should not be sorted alphabetically');
+assert(defaultJson.indexOf('"z"') < defaultJson.indexOf('"a"'), 'tojson without sortedkey should not sort keys');
+const nestedObj = { b: { y: 1, x: 2 }, a: { z: 1, a: 2 } };
+const sortedNestedJson = tojson(nestedObj, "", true, 0, true);
+assert(sortedNestedJson.indexOf('"a"') < sortedNestedJson.indexOf('"b"'), 'sortedkey=true should sort top-level keys');
+assert(sortedNestedJson.indexOf('"a" :') < sortedNestedJson.indexOf('"z" :'), 'sortedkey=true should sort nested keys');
+const objWithBson = {
+    c: NumberLong(123),
+    b: ObjectId('0123456789abcdef01234567'),
+    a: NumberDecimal("1.1")
+};
+const sortedBsonJson = tojson(objWithBson, "", true, 0, true);
+assert(sortedBsonJson.indexOf('"a"') < sortedBsonJson.indexOf('"b"'), 'sortedkey=true should sort keys with BSON types');
+assert(sortedBsonJson.indexOf('"b"') < sortedBsonJson.indexOf('"c"'), 'sortedkey=true should sort keys with BSON types');
+const arrayWithObjects = [{ z: 1, a: 2 }, { y: 3, b: 4 }];
+const sortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, true);
+const unsortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, false);
+const defaultArrayJson = Array.tojson(arrayWithObjects, "", true, 0);
+assert(sortedArrayJson.indexOf('"a"') < sortedArrayJson.indexOf('"z"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(sortedArrayJson.indexOf('"b"') < sortedArrayJson.indexOf('"y"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(unsortedArrayJson.indexOf('"z"') < unsortedArrayJson.indexOf('"a"'), 'Array.tojson with sortedKeys=false should not sort keys');
+assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array.tojson without sortedKeys should not sort keys');
