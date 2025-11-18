@@ -226,7 +226,7 @@ Array.shuffle = function(arr) {
     return arr;
 };
 
-Array.tojson = function(a, indent, nolint, depth) {
+Array.tojson = function(a, indent, nolint, depth, sortedKeys) {
     if (!Array.isArray(a)) {
         throw new Error("The first argument to Array.tojson must be an array");
     }
@@ -256,7 +256,7 @@ Array.tojson = function(a, indent, nolint, depth) {
         indent += "\t";
 
     for (var i = 0; i < a.length; i++) {
-        s += indent + tojson(a[i], indent, nolint, depth + 1, false);
+        s += indent + tojson(a[i], indent, nolint, depth + 1, sortedKeys);
         if (i < a.length - 1) {
             s += "," + elementSeparator;
         }

@@ -153,3 +153,11 @@ const objWithBson = {
 const sortedBsonJson = tojson(objWithBson, "", true, 0, true);
 assert(sortedBsonJson.indexOf('"a"') < sortedBsonJson.indexOf('"b"'), 'sortedkey=true should sort keys with BSON types');
 assert(sortedBsonJson.indexOf('"b"') < sortedBsonJson.indexOf('"c"'), 'sortedkey=true should sort keys with BSON types');
+const arrayWithObjects = [{ z: 1, a: 2 }, { y: 3, b: 4 }];
+const sortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, true);
+const unsortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, false);
+const defaultArrayJson = Array.tojson(arrayWithObjects, "", true, 0);
+assert(sortedArrayJson.indexOf('"a"') < sortedArrayJson.indexOf('"z"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(sortedArrayJson.indexOf('"b"') < sortedArrayJson.indexOf('"y"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(unsortedArrayJson.indexOf('"z"') < unsortedArrayJson.indexOf('"a"'), 'Array.tojson with sortedKeys=false should not sort keys');
+assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array.tojson without sortedKeys should not sort keys');
