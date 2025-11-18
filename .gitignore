@@ -2,6 +2,7 @@
 .lock-wscript
 .idea/
 .vscode/
+.zed/
 *.iml
 .npmrc
 .nvmrc
