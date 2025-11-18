@@ -1,5 +1,7 @@
 load(__dirname + '/index.js');
 
+const bson = require('bson');
+
 assert.strictEqual(ObjectId('0123456789abcdef01234567').tojson(), 'ObjectId("0123456789abcdef01234567")');
 
 assert.strictEqual(BinData(4, 'abcdefgh').toString(), 'BinData(4,"abcdefgh")');
@@ -173,3 +175,7 @@ assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }', "minKey toJSON should w
 const anotherMinKeyRef = new MinKey();
 assert.strictEqual(minKey, anotherMinKeyRef, "minKey should be a singleton - v1");
 assert.strictEqual(MinKey(), MinKey(), "minKey should be a singleton - v2");
+
+const serializedBsonMinKey = bson.serialize({ key1: MinKey, key2: MinKey() });
+const deserializedBsonMinKey = bson.deserialize(serializedBsonMinKey);
+assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2, "should be equal after bson serialization");
