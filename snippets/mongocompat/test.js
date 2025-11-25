@@ -167,15 +167,15 @@ assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array
 // Test MinKey
 const minKey = new MinKey();
 assert(minKey instanceof MinKey, "minKey should be an instance of MinKey");
-assert.strictEqual(minKey.tojson(), '{ "$minKey" : 1 }', "minKey should serialize correctly");
-assert.strictEqual(minKey.toString(), "[object Function]", "minKey toString should work");
-assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }', "minKey toJSON should work");
+assert.strictEqual(minKey.tojson(), '{ "$minKey" : 1 }');
+assert.strictEqual(minKey.toString(), "[object Function]");
+assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }');
 
 // Test that multiple references return the same instance
 const anotherMinKeyRef = new MinKey();
-assert.strictEqual(minKey, anotherMinKeyRef, "minKey should be a singleton - v1");
-assert.strictEqual(MinKey(), MinKey(), "minKey should be a singleton - v2");
+assert.strictEqual(minKey, anotherMinKeyRef);
+assert.strictEqual(MinKey(), MinKey());
 
 const serializedBsonMinKey = bson.serialize({ key1: MinKey, key2: MinKey() });
 const deserializedBsonMinKey = bson.deserialize(serializedBsonMinKey);
-assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2, "should be equal after bson serialization");
+assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2);
