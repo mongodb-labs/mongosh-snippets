@@ -4,7 +4,7 @@ if (typeof (Timestamp) != "undefined") {
 
     // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L67-L78
     function validateTimestampComponent(component, name) {
-        const MAX_UINT32 = 4294967295; 
+        const MAX_UINT32 = 4294967295;
 
         if (typeof component !== 'number') {
             throw new TypeError(`${name} must be a number`);
@@ -747,6 +747,41 @@ if (typeof (MinKey) != "undefined") {
     };
 } else {
     print("warning: no MinKey class");
+}
+
+// MaxKey
+if (typeof (MaxKey) != "undefined") {
+    const OriginalMaxKey = MaxKey;
+    MaxKey = function () {
+        if (MaxKey.prototype.__instance__ === undefined) {
+            MaxKey.prototype.__instance__ = new OriginalMaxKey();
+        }
+
+        return MaxKey.prototype.__instance__;
+    };
+
+    MaxKey.prototype = OriginalMaxKey.prototype;
+
+    for (const key of Object.getOwnPropertyNames(OriginalMaxKey)) {
+        // Skip prototype, length, name(function internals)
+        if (key !== 'prototype' && key !== 'length' && key !== 'name') {
+            MaxKey[key] = OriginalMaxKey[key];
+        }
+    }
+
+    MaxKey.prototype.toJSON = function () {
+        return this.tojson();
+    };
+
+    MaxKey.prototype.tojson = function () {
+        return "{ \"$MaxKey\" : 1 }";
+    };
+
+    MaxKey.prototype.toString = function () {
+        return "[object Function]";
+    };
+} else {
+    print("warning: no MaxKey class");
 }
 
 // Free Functions

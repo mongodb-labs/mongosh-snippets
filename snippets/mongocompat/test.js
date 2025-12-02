@@ -179,3 +179,19 @@ assert.strictEqual(MinKey(), MinKey());
 const serializedBsonMinKey = bson.serialize({ key1: MinKey, key2: MinKey() });
 const deserializedBsonMinKey = bson.deserialize(serializedBsonMinKey);
 assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2);
+
+// Test MaxKey
+const maxKey = new MaxKey();
+assert(maxKey instanceof MaxKey, "MaxKey should be an instance of MaxKey");
+assert.strictEqual(maxKey.tojson(), '{ "$MaxKey" : 1 }');
+assert.strictEqual(maxKey.toString(), "[object Function]");
+assert.strictEqual(maxKey.toJSON(), '{ "$MaxKey" : 1 }');
+
+// Test that multiple references return the same instance
+const anotherMaxKeyRef = new MaxKey();
+assert.strictEqual(maxKey, anotherMaxKeyRef);
+assert.strictEqual(MaxKey(), MaxKey());
+
+const serializedBsonMaxKey = bson.serialize({ key1: MaxKey, key2: MaxKey() });
+const deserializedBsonMaxKey = bson.deserialize(serializedBsonMaxKey);
+assert.deepStrictEqual(deserializedBsonMaxKey.key1, deserializedBsonMaxKey.key2);
