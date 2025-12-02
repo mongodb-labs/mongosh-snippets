@@ -1,5 +1,7 @@
 load(__dirname + '/index.js');
 
+const bson = require('bson');
+
 assert.strictEqual(ObjectId('0123456789abcdef01234567').tojson(), 'ObjectId("0123456789abcdef01234567")');
 
 assert.strictEqual(BinData(4, 'abcdefgh').toString(), 'BinData(4,"abcdefgh")');
@@ -87,7 +89,7 @@ const tsFromStr = Timestamp.fromString('ff', 16);
 assert.strictEqual(tsFromStr.i, 255);
 assert.strictEqual(tsFromStr.t, 0);
 assert.strictEqual(Timestamp.MAX_VALUE._bsontype, 'Long');
-assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE); 
+assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE);
 
 const id = ObjectId('68ffa28b77bba38c9ddcf376');
 const dbRef = DBRef('testColl', id, 'testDb');
@@ -161,3 +163,19 @@ assert(sortedArrayJson.indexOf('"a"') < sortedArrayJson.indexOf('"z"'), 'Array.t
 assert(sortedArrayJson.indexOf('"b"') < sortedArrayJson.indexOf('"y"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
 assert(unsortedArrayJson.indexOf('"z"') < unsortedArrayJson.indexOf('"a"'), 'Array.tojson with sortedKeys=false should not sort keys');
 assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array.tojson without sortedKeys should not sort keys');
+
+// Test MinKey
+const minKey = new MinKey();
+assert(minKey instanceof MinKey, "minKey should be an instance of MinKey");
+assert.strictEqual(minKey.tojson(), '{ "$minKey" : 1 }');
+assert.strictEqual(minKey.toString(), "[object Function]");
+assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }');
+
+// Test that multiple references return the same instance
+const anotherMinKeyRef = new MinKey();
+assert.strictEqual(minKey, anotherMinKeyRef);
+assert.strictEqual(MinKey(), MinKey());
+
+const serializedBsonMinKey = bson.serialize({ key1: MinKey, key2: MinKey() });
+const deserializedBsonMinKey = bson.deserialize(serializedBsonMinKey);
+assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2);
