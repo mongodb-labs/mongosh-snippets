@@ -3,6 +3,8 @@ import { Config } from './config.js';
 import {
   formatHelpCommands,
   wrapAllFunctions,
+  getCommandMetadata,
+  buildHelpCommands,
   type CliContext,
 } from './helpers.js';
 import { models } from './providers/models.js';
@@ -51,17 +53,29 @@ module.exports = async (globalThis: CliContext) => {
       return ai;
     }
 
-    @aiCommand()
+    @aiCommand({
+      alias: 'command',
+      description: 'Generate mongosh commands',
+      example: 'ai.cmd insert a new sample document',
+    })
     async cmd(prompt: string) {
       await this.ai.shell(prompt);
     }
 
-    @aiCommand()
+    @aiCommand({
+      alias: 'query',
+      description: 'Generate a query or aggregation',
+      example: 'ai.find documents where name = "Ada"',
+    })
     async find(prompt: string) {
       await this.ai.aggregate(prompt);
     }
 
-    @aiCommand()
+    @aiCommand({
+      description: 'Ask MongoDB questions',
+      example: 'ai.ask how do I run queries in mongosh?',
+      hidden: true,
+    })
     async ask(prompt: string) {
       await this.ai.processResponse(prompt, {
         systemPrompt:
@@ -70,35 +84,15 @@ module.exports = async (globalThis: CliContext) => {
       });
     }
 
-    @aiCommand({ requiresPrompt: false })
+    @aiCommand({
+      prompt: 'none',
+      description: 'Show help information',
+      example: 'ai.help()',
+      hidden: true,
+    })
     help() {
-      const commands = [
-        {
-          cmd: 'ai.ask',
-          desc: 'ask MongoDB questions',
-          example: 'ai.ask how do I run queries in mongosh?',
-        },
-        {
-          cmd: 'ai.find',
-          desc: 'generate a query or aggregation',
-          example: 'ai.find documents where name = "Ada"',
-        },
-        {
-          cmd: 'ai.collection',
-          desc: 'set the active collection',
-          example: 'ai.collection users',
-        },
-        {
-          cmd: 'ai.cmd',
-          desc: `generate mongosh commands`,
-          example: 'ai.cmd insert a new sample document',
-        },
-        {
-          cmd: 'ai.config',
-          desc: 'configure the AI commands',
-          example: 'ai.config.set("provider", "ollama")',
-        },
-      ];
+      const metadata = getCommandMetadata(this);
+      const commands = buildHelpCommands(metadata, ['find', 'cmd']);
 
       this.ai.respond(
         formatHelpCommands(commands, {
@@ -109,26 +103,51 @@ module.exports = async (globalThis: CliContext) => {
       );
     }
 
-    @aiCommand()
+    @aiCommand({
+      prompt: 'none',
+      description: 'Clear the conversation history',
+      example: 'ai.clear',
+      alias: 'cls',
+    })
     clear() {
       this.ai.clear();
     }
 
-    @aiCommand()
+    @aiCommand({
+      alias: 'coll',
+      description: 'Set the active collection',
+      example: 'ai.collection users',
+    })
     collection(name: string) {
       this.ai.collection(name);
     }
 
-    @aiCommand()
+    @aiCommand({
+      description: 'Change the AI provider',
+      example: 'ai.provider ollama',
+      hidden: true,
+    })
     async provider(provider: string) {
       await this.config.set('provider', provider);
       this.ai.respond(`Switched to ${chalk.blue(provider)} provider`);
     }
 
-    @aiCommand()
+    @aiCommand({
+      description: 'Change the AI model',
+      example: 'ai.model gpt-4',
+      hidden: true,
+    })
     async model(model: string) {
       await this.config.set('model', model);
       this.ai.respond(`Switched to ${chalk.blue(model)} model`);
+    }
+
+    async askOrHelp(prompt?: string) {
+      if (prompt) {
+        await this.ask(prompt);
+      } else {
+        this.help();
+      }
     }
 
     [Symbol.for('nodejs.util.inspect.custom')]() {

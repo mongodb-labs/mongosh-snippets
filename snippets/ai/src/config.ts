@@ -80,14 +80,14 @@ export class Config extends EventEmitter<{
   [Symbol.for('nodejs.util.inspect.custom')]() {
     const lines = Object.entries(configSchema.shape).map(([key, schema]) => {
       let type: string | undefined = undefined;
-      if ('values' in schema.def) {
-        type = `${(schema.def.values as string[]).join(' | ')}`;
+      if (schema instanceof z.ZodEnum) {
+        type = `${schema.options.join(' | ')}`;
       }
       const i = (value: unknown) => inspect(value, { colors: true });
 
       return `  ${i(key)}: ${chalk.white(i(this.configMap[key as ConfigKeys]))},${type ? chalk.gray(` // ${type}`) : ''}`;
     });
 
-    return `{\n${lines.join('\n')}\n}`;
+    return `{\n${lines.join('\n')}\n}\n${chalk.gray('You can change values with')} ${chalk.white.bold('ai.config.set("key", "value")')}`;
   }
 }

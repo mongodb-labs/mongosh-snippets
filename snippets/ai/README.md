@@ -1,19 +1,19 @@
 # AI Snippets for mongosh
 
 > [!CAUTION]
-> This is an experimental, early-stage snippet that is not meant for production use. 
+> This is an experimental snippet that is not meant for production use. 
 
 This snippet adds a suite of commands accessible with the `ai` command. This includes:
 
 |  |  |  |
 |---------|-------------|---------|
-| `ai.ask` | Ask questions about MongoDB | `ai.ask how do I run queries in mongosh?` |
+| `ai <question>` | Ask questions about MongoDB | `ai.ask how do I run queries in mongosh?` |
 | `ai.cmd` | Generate general mongosh commands _alias:_ `ai.cmd` | `ai.cmd get sharding info` |
 | `ai.find` | Generate queries and aggregations based on natural language | `ai.find users with age > 30` |
 | `ai.collection` | Set the active collection | `ai.collection users` |
 | `ai.config` | Configure the AI commands | `ai.config.set("provider", "ollama")` |
 
-This currently supports 5 different AI providers: `docs, openai | mistral | atlas | ollama` and any model they support. For cloud providers, you can specify the API key with `MONGOSH_AI_API_KEY`.
+This currently supports 4 different AI providers: `docs | openai | mistral | ollama` and any model they support. For   
 
 ## Installation
 

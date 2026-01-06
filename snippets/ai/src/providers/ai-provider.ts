@@ -270,13 +270,18 @@ export class AiProvider {
 
   async getResponseFromModel(
     messages: ModelMessage[],
+
     { systemPrompt, signal }: Omit<GetResponseOptions, 'expectedOutput'>,
   ): Promise<string> {
     const result = streamText({
       model: this.model,
-
+      providerOptions: {
+        openai: {
+          store: false,
+          ...(systemPrompt ? { instructions: systemPrompt } : {}),
+        },
+      },
       messages: messages,
-      system: systemPrompt,
       abortSignal: signal ?? AbortSignal.timeout(30_000),
     });
 
@@ -305,8 +310,13 @@ export class AiProvider {
       const result = streamText({
         model: this.model,
         messages: this.session.messages,
-        system: systemPrompt,
+        ...(systemPrompt ? { system: systemPrompt } : {}),
         abortSignal: signal,
+        providerOptions: {
+          openai: {
+            store: false,
+          },
+        },
       });
 
       text = '';
