@@ -23,6 +23,7 @@ export function createMockCliContext(options: MockCliContextOptions = {}): {
       model: 'default',
       includeSampleDocs: false,
       defaultCollection: undefined,
+      parallelRequests: false,
     },
   } = options;
 

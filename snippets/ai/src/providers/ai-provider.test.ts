@@ -372,14 +372,9 @@ describe('AiProvider', () => {
     it('should abort existing request when new request comes in with parallelRequests disabled', async () => {
       const provider = new AiProvider(mockCliContext, mockConfig, mockModel);
 
-      const respondCalls: string[] = [];
-      provider.respond = (text: string) => {
-        respondCalls.push(text);
-      };
-
       // Track abort calls
       let firstRequestAborted = false;
-      let secondRequestStarted = false;
+      let secondRequestRejected = false;
 
       // Mock executeRequest to simulate long-running requests
       (provider as any).executeRequest = async (
@@ -396,10 +391,6 @@ describe('AiProvider', () => {
             // Keep the promise pending unless aborted
             setTimeout(resolve, 10000);
           });
-        } else if (prompt === 'second request') {
-          secondRequestStarted = true;
-          // Second request completes quickly
-          return Promise.resolve();
         }
       };
 
@@ -415,19 +406,124 @@ describe('AiProvider', () => {
       // Give it a moment to start
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Start second request
-      await provider.processResponse('second request', {
-        expectedOutput: 'command',
-      });
+      // Try to start second request - should be rejected
+      try {
+        await provider.processResponse('second request', {
+          expectedOutput: 'command',
+        });
+      } catch (error: any) {
+        secondRequestRejected = true;
+        expect(error.message).toContain('Parallel request was stopped');
+      }
 
       // Verify that the first request was aborted
       expect(firstRequestAborted).toBe(true);
 
-      // Verify that the abort message was shown
-      expect(respondCalls.some((call) => call.includes('stopped'))).toBe(true);
+      // Verify that the second request was rejected
+      expect(secondRequestRejected).toBe(true);
+    });
 
-      // Verify that the second request started
+    it('should allow parallel requests when parallelRequests is enabled and provider is not mongodb', async () => {
+      const localConfigData = { ...configData };
+      const config = await Config.create(createMockReplConfig(localConfigData));
+      await config.set('provider', 'openai');
+      await config.set('parallelRequests', true);
+      const provider = new AiProvider(mockCliContext, config, mockModel);
+
+      let firstRequestCompleted = false;
+      let secondRequestStarted = false;
+      let secondRequestCompleted = false;
+
+      // Mock executeRequest
+      (provider as any).executeRequest = async (prompt: string) => {
+        if (prompt === 'first request') {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          firstRequestCompleted = true;
+        } else if (prompt === 'second request') {
+          secondRequestStarted = true;
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          secondRequestCompleted = true;
+        }
+      };
+
+      // Start first request (don't await it)
+      const firstRequest = provider.processResponse('first request', {
+        expectedOutput: 'command',
+      });
+
+      // Give it a moment to start
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Start second request - should succeed without aborting first
+      await provider.processResponse('second request', {
+        expectedOutput: 'command',
+      });
+
+      // Second request should have started and completed
       expect(secondRequestStarted).toBe(true);
+      expect(secondRequestCompleted).toBe(true);
+
+      // Wait for first request to complete
+      await firstRequest;
+
+      // Both requests should complete successfully
+      expect(firstRequestCompleted).toBe(true);
+    });
+
+    it('should abort requests when provider is mongodb even if parallelRequests is enabled', async () => {
+      const localConfigData = {
+        ...configData,
+        provider: 'mongodb',
+        parallelRequests: true, // This should be ignored for mongodb
+      };
+      const config = await Config.create(createMockReplConfig(localConfigData));
+      const provider = new AiProvider(mockCliContext, config, mockModel);
+
+      let firstRequestAborted = false;
+      let secondRequestRejected = false;
+
+      // Mock executeRequest
+      (provider as any).executeRequest = async (
+        prompt: string,
+        options: any,
+      ) => {
+        if (prompt === 'first request') {
+          await new Promise((resolve, reject) => {
+            options.signal.addEventListener('abort', () => {
+              firstRequestAborted = true;
+              reject(new Error('Aborted'));
+            });
+            setTimeout(resolve, 10000);
+          });
+        }
+      };
+
+      // Start first request (don't await it, catch any errors)
+      provider
+        .processResponse('first request', {
+          expectedOutput: 'command',
+        })
+        .catch(() => {
+          // Expected to be aborted
+        });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Try to start second request - should be rejected
+      try {
+        await provider.processResponse('second request', {
+          expectedOutput: 'command',
+        });
+      } catch (error: any) {
+        secondRequestRejected = true;
+        expect(error.message).toContain('Parallel request was stopped');
+      }
+
+      // First request should have been aborted even though parallelRequests is true
+      expect(firstRequestAborted).toBe(true);
+
+      // Second request should have been rejected
+      expect(secondRequestRejected).toBe(true);
     });
   });
 });

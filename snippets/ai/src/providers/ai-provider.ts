@@ -304,6 +304,7 @@ export class AiProvider {
     const supportsParallelRequests =
       this.config.get('parallelRequests') && this.activeProvider !== 'mongodb';
 
+    // Abort existing request if parallel requests are not supported
     if (!supportsParallelRequests && this.currentRequestController) {
       this.currentRequestController.abort();
       throw new Error(
@@ -311,12 +312,18 @@ export class AiProvider {
       );
     }
 
-    this.currentRequestController = new AbortController();
+    // Create a new AbortController for this request (if parallel requests are disabled)
+    const requestController = !supportsParallelRequests
+      ? new AbortController()
+      : null;
+    if (requestController) {
+      this.currentRequestController = requestController;
+    }
 
-    const combinedSignal = AbortSignal.any([
-      signal,
-      this.currentRequestController.signal,
-    ]);
+    // Combine the request controller signal with the provided signal
+    const combinedSignal = requestController
+      ? AbortSignal.any([signal, requestController.signal])
+      : signal;
 
     try {
       await this.executeRequest(prompt, {
@@ -325,7 +332,12 @@ export class AiProvider {
         expectedOutput,
       });
     } finally {
-      this.currentRequestController = null;
+      if (
+        requestController &&
+        this.currentRequestController === requestController
+      ) {
+        this.currentRequestController = null;
+      }
     }
   }
 
