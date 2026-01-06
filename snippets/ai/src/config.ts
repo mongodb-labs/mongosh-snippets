@@ -8,6 +8,7 @@ const configSchema = z.object({
   model: z.string(),
   includeSampleDocs: z.boolean(),
   defaultCollection: z.string().optional(),
+  parallelRequests: z.boolean(),
 });
 
 const configKeys = Object.keys(configSchema.shape) as Array<keyof ConfigSchema>;
@@ -20,6 +21,7 @@ const defaults: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
   includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? false,
   defaultCollection: process.env.MONGOSH_AI_DEFAULT_COLLECTION,
+  parallelRequests: process.env.MONGOSH_AI_PARALLEL_REQUESTS ?? false,
 };
 
 export class Config extends EventEmitter<{
@@ -30,7 +32,9 @@ export class Config extends EventEmitter<{
     },
   ];
 }> {
-  private configMap: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = defaults;
+  private configMap: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
+    ...defaults,
+  };
 
   private constructor(
     private readonly replConfig: {

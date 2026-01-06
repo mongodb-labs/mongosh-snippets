@@ -25,6 +25,7 @@ export class AiProvider {
     collection: undefined,
   };
   public model: LanguageModel;
+  private currentRequestController: AbortController | null = null;
 
   constructor(
     private readonly cliContext: CliContext,
@@ -293,6 +294,42 @@ export class AiProvider {
   }
 
   async processResponse(
+    prompt: string,
+    {
+      systemPrompt,
+      signal = AbortSignal.timeout(30_000),
+      expectedOutput,
+    }: GetResponseOptions,
+  ): Promise<void> {
+    const supportsParallelRequests =
+      this.config.get('parallelRequests') && this.activeProvider !== 'mongodb';
+
+    if (!supportsParallelRequests && this.currentRequestController) {
+      this.currentRequestController.abort();
+      throw new Error(
+        'Parallel request was stopped. For non-MongoDB providers, you can enable parallel requests by setting the parallelRequests config option.',
+      );
+    }
+
+    this.currentRequestController = new AbortController();
+
+    const combinedSignal = AbortSignal.any([
+      signal,
+      this.currentRequestController.signal,
+    ]);
+
+    try {
+      await this.executeRequest(prompt, {
+        systemPrompt,
+        signal: combinedSignal,
+        expectedOutput,
+      });
+    } finally {
+      this.currentRequestController = null;
+    }
+  }
+
+  private async executeRequest(
     prompt: string,
     {
       systemPrompt,

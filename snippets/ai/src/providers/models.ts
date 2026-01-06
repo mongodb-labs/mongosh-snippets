@@ -2,16 +2,14 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider-v2';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const packageJson = require('../../package.json') as { version: string };
 export const models = {
   mongodb(model = 'mongodb-chat-latest') {
     return createOpenAI({
       baseURL: 'https://knowledge.mongodb.com/api/v1',
       apiKey: '',
       headers: {
-        'X-Request-Origin': `mongodb-mongosh/${packageJson.version}`,
-        'user-agent': `mongodb-mongosh/${packageJson.version}`,
+        'X-Request-Origin': `mongodb-mongosh`,
+        'user-agent': `mongodb-mongosh`,
       },
     }).responses(model);
   },
