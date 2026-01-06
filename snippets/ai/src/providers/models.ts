@@ -5,7 +5,7 @@ import { createOllama } from 'ollama-ai-provider-v2';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJson = require('../../package.json') as { version: string };
 export const models = {
-  docs(model = 'mongodb-chat-latest') {
+  mongodb(model = 'mongodb-chat-latest') {
     return createOpenAI({
       baseURL: 'https://knowledge.mongodb.com/api/v1',
       apiKey: '',

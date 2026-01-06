@@ -4,7 +4,7 @@ import { inspect } from 'util';
 import { z, type z as ZodType } from 'zod';
 
 const configSchema = z.object({
-  provider: z.enum(['docs', 'openai', 'mistral', 'ollama']),
+  provider: z.enum(['mongodb', 'openai', 'mistral', 'ollama']),
   model: z.string(),
   includeSampleDocs: z.boolean(),
   defaultCollection: z.string().optional(),
@@ -16,7 +16,7 @@ export type ConfigSchema = ZodType.infer<typeof configSchema>;
 type ConfigKeys = keyof ConfigSchema;
 
 const defaults: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
-  provider: process.env.MONGOSH_AI_PROVIDER ?? 'docs',
+  provider: process.env.MONGOSH_AI_PROVIDER ?? 'mongodb',
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
   includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? false,
   defaultCollection: process.env.MONGOSH_AI_DEFAULT_COLLECTION,

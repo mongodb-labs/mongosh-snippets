@@ -13,16 +13,13 @@ This snippet adds a suite of commands accessible with the `ai` command. This inc
 | `ai.collection` | Set the active collection | `ai.collection users` |
 | `ai.config` | Configure the AI commands | `ai.config.set("provider", "ollama")` |
 
-This currently supports 4 different AI providers: `docs | openai | mistral | ollama` and any model they support. For   
+This currently supports 4 different AI providers: `mongodb`, `openai` (requires `MONGOSH_AI_OPENAI_API_KEY` environment variable to be set), `mistral` (requires `MONGOSH_AI_MISTRAL_API_KEY`) and `ollama`.
 
 ## Installation
 
 You can install this snippet using the `snippet` command in mongosh:
 
 ```javascript
-config.set('snippetIndexSourceURLs', config.get('snippetIndexSourceURLs') +
-'; https://github.com/gagik/mongosh-snippets/raw/refs/heads/ai/index.bson.br'
- )
 snippet install ai
 ```
 
