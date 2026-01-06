@@ -1,5 +1,7 @@
 load(__dirname + '/index.js');
 
+const bson = require('bson');
+
 assert.strictEqual(ObjectId('0123456789abcdef01234567').tojson(), 'ObjectId("0123456789abcdef01234567")');
 
 assert.strictEqual(BinData(4, 'abcdefgh').toString(), 'BinData(4,"abcdefgh")');
@@ -8,6 +10,24 @@ assert.strictEqual(NumberLong(2147483647).toString(), 'NumberLong(2147483647)');
 assert.strictEqual(NumberLong("2147483648").toString(), 'NumberLong("2147483648")');
 assert.strictEqual(NumberLong(-2147483648).toString(), 'NumberLong(-2147483648)');
 assert.strictEqual(NumberLong(-2147483649).toString(), 'NumberLong("-2147483649")');
+
+const int1 = NumberInt(42);
+assert.strictEqual(int1.toString(), 'NumberInt(42)');
+assert.strictEqual(int1.tojson(), 'NumberInt(42)');
+assert.strictEqual(int1.toNumber(), 42);
+assert.strictEqual(int1.valueOf(), 42);
+assert.strictEqual(int1.toJSON(), 42);
+const int2 = NumberInt(-100);
+assert.strictEqual(int2.toString(), 'NumberInt(-100)');
+assert.strictEqual(int2.tojson(), 'NumberInt(-100)');
+assert.strictEqual(int2.toNumber(), -100);
+const maxInt32 = NumberInt(2147483647);
+assert.strictEqual(maxInt32.toString(), 'NumberInt(2147483647)');
+assert.strictEqual(maxInt32.toNumber(), 2147483647);
+const minInt32 = NumberInt(-2147483648);
+assert.strictEqual(minInt32.toString(), 'NumberInt(-2147483648)');
+assert.strictEqual(minInt32.toNumber(), -2147483648);
+
 assert.strictEqual(NumberLong(9223372036854775807).toString(), 'NumberLong("9223372036854775807")');
 assert.strictEqual(NumberLong(-9223372036854775808).toString(), 'NumberLong("-9223372036854775808")');
 const maxLong = NumberLong(9223372036854775807, 2147483647, -1);
@@ -69,7 +89,7 @@ const tsFromStr = Timestamp.fromString('ff', 16);
 assert.strictEqual(tsFromStr.i, 255);
 assert.strictEqual(tsFromStr.t, 0);
 assert.strictEqual(Timestamp.MAX_VALUE._bsontype, 'Long');
-assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE); 
+assert.strictEqual(Timestamp.MAX_VALUE, Long.MAX_UNSIGNED_VALUE);
 
 const id = ObjectId('68ffa28b77bba38c9ddcf376');
 const dbRef = DBRef('testColl', id, 'testDb');
@@ -113,3 +133,65 @@ try {
 }
 assert.strictEqual(typeof tojsonObject({ key: "value" }), 'string');
 assert.strictEqual(typeof tojsonObject([1, 2, 3]), 'string');
+
+// Test sortedkey parameter
+const unsortedObj = { z: 1, a: 2, m: 3 };
+const sortedJson = tojson(unsortedObj, "", true, 0, true);
+const unsortedJson = tojson(unsortedObj, "", true, 0, false);
+const defaultJson = tojson(unsortedObj);
+assert(sortedJson.indexOf('"a"') < sortedJson.indexOf('"m"'), 'sortedJson should be sorted alphabetically');
+assert(sortedJson.indexOf('"m"') < sortedJson.indexOf('"z"'), 'sortedJson should be sorted alphabetically');
+assert(unsortedJson.indexOf('"z"') < unsortedJson.indexOf('"a"'), 'unsortedJson should not be sorted alphabetically');
+assert(defaultJson.indexOf('"z"') < defaultJson.indexOf('"a"'), 'tojson without sortedkey should not sort keys');
+const nestedObj = { b: { y: 1, x: 2 }, a: { z: 1, a: 2 } };
+const sortedNestedJson = tojson(nestedObj, "", true, 0, true);
+assert(sortedNestedJson.indexOf('"a"') < sortedNestedJson.indexOf('"b"'), 'sortedkey=true should sort top-level keys');
+assert(sortedNestedJson.indexOf('"a" :') < sortedNestedJson.indexOf('"z" :'), 'sortedkey=true should sort nested keys');
+const objWithBson = {
+    c: NumberLong(123),
+    b: ObjectId('0123456789abcdef01234567'),
+    a: NumberDecimal("1.1")
+};
+const sortedBsonJson = tojson(objWithBson, "", true, 0, true);
+assert(sortedBsonJson.indexOf('"a"') < sortedBsonJson.indexOf('"b"'), 'sortedkey=true should sort keys with BSON types');
+assert(sortedBsonJson.indexOf('"b"') < sortedBsonJson.indexOf('"c"'), 'sortedkey=true should sort keys with BSON types');
+const arrayWithObjects = [{ z: 1, a: 2 }, { y: 3, b: 4 }];
+const sortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, true);
+const unsortedArrayJson = Array.tojson(arrayWithObjects, "", true, 0, false);
+const defaultArrayJson = Array.tojson(arrayWithObjects, "", true, 0);
+assert(sortedArrayJson.indexOf('"a"') < sortedArrayJson.indexOf('"z"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(sortedArrayJson.indexOf('"b"') < sortedArrayJson.indexOf('"y"'), 'Array.tojson with sortedKeys=true should sort object keys in array elements');
+assert(unsortedArrayJson.indexOf('"z"') < unsortedArrayJson.indexOf('"a"'), 'Array.tojson with sortedKeys=false should not sort keys');
+assert(defaultArrayJson.indexOf('"z"') < defaultArrayJson.indexOf('"a"'), 'Array.tojson without sortedKeys should not sort keys');
+
+// Test MinKey
+const minKey = new MinKey();
+assert(minKey instanceof MinKey, "minKey should be an instance of MinKey");
+assert.strictEqual(minKey.tojson(), '{ "$minKey" : 1 }');
+assert.strictEqual(minKey.toString(), "[object Function]");
+assert.strictEqual(minKey.toJSON(), '{ "$minKey" : 1 }');
+
+// Test that multiple references return the same instance
+const anotherMinKeyRef = new MinKey();
+assert.strictEqual(minKey, anotherMinKeyRef);
+assert.strictEqual(MinKey(), MinKey());
+
+const serializedBsonMinKey = bson.serialize({ key1: MinKey, key2: MinKey() });
+const deserializedBsonMinKey = bson.deserialize(serializedBsonMinKey);
+assert.deepStrictEqual(deserializedBsonMinKey.key1, deserializedBsonMinKey.key2);
+
+// Test MaxKey
+const maxKey = new MaxKey();
+assert(maxKey instanceof MaxKey, "MaxKey should be an instance of MaxKey");
+assert.strictEqual(maxKey.tojson(), '{ "$MaxKey" : 1 }');
+assert.strictEqual(maxKey.toString(), "[object Function]");
+assert.strictEqual(maxKey.toJSON(), '{ "$MaxKey" : 1 }');
+
+// Test that multiple references return the same instance
+const anotherMaxKeyRef = new MaxKey();
+assert.strictEqual(maxKey, anotherMaxKeyRef);
+assert.strictEqual(MaxKey(), MaxKey());
+
+const serializedBsonMaxKey = bson.serialize({ key1: MaxKey, key2: MaxKey() });
+const deserializedBsonMaxKey = bson.deserialize(serializedBsonMaxKey);
+assert.deepStrictEqual(deserializedBsonMaxKey.key1, deserializedBsonMaxKey.key2);

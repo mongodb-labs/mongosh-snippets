@@ -4,7 +4,7 @@ if (typeof (Timestamp) != "undefined") {
 
     // Reference: https://github.com/mongodb/mongo/blob/c4d21d3346572e28df2f174df4d87e7618df4a77/src/mongo/scripting/mozjs/timestamp.cpp#L67-L78
     function validateTimestampComponent(component, name) {
-        const MAX_UINT32 = 4294967295; 
+        const MAX_UINT32 = 4294967295;
 
         if (typeof component !== 'number') {
             throw new TypeError(`${name} must be a number`);
@@ -226,7 +226,7 @@ Array.shuffle = function(arr) {
     return arr;
 };
 
-Array.tojson = function(a, indent, nolint, depth) {
+Array.tojson = function(a, indent, nolint, depth, sortedKeys) {
     if (!Array.isArray(a)) {
         throw new Error("The first argument to Array.tojson must be an array");
     }
@@ -256,7 +256,7 @@ Array.tojson = function(a, indent, nolint, depth) {
         indent += "\t";
 
     for (var i = 0; i < a.length; i++) {
-        s += indent + tojson(a[i], indent, nolint, depth + 1);
+        s += indent + tojson(a[i], indent, nolint, depth + 1, sortedKeys);
         if (i < a.length - 1) {
             s += "," + elementSeparator;
         }
@@ -487,9 +487,15 @@ Object.defineProperty(NumberLong.prototype, 'exactValueString', {
 if (!NumberInt.prototype) {
     NumberInt.prototype = {};
 }
-
+NumberInt.prototype.nativeToString = NumberInt.prototype.toString;
+NumberInt.prototype.toString = function() {
+    return `NumberInt(${this.valueOf()})`;
+};
 NumberInt.prototype.tojson = function() {
     return this.toString();
+};
+NumberInt.prototype.toNumber = function() {
+    return this.valueOf();
 };
 
 // NumberDecimal
@@ -708,12 +714,82 @@ if (typeof (gc) == "undefined") {
     };
 }
 
+// MinKey
+if (typeof (MinKey) != "undefined") {
+    const OriginalMinKey = MinKey;
+    MinKey = function () {
+        if (MinKey.prototype.__instance__ === undefined) {
+            MinKey.prototype.__instance__ = new OriginalMinKey();
+        }
+
+        return MinKey.prototype.__instance__;
+    };
+
+    MinKey.prototype = OriginalMinKey.prototype;
+
+    for (const key of Object.getOwnPropertyNames(OriginalMinKey)) {
+        // Skip prototype, length, name(function internals)
+        if (key !== 'prototype' && key !== 'length' && key !== 'name') {
+            MinKey[key] = OriginalMinKey[key];
+        }
+    }
+
+    MinKey.prototype.toJSON = function () {
+        return this.tojson();
+    };
+
+    MinKey.prototype.tojson = function () {
+        return "{ \"$minKey\" : 1 }";
+    };
+
+    MinKey.prototype.toString = function () {
+        return "[object Function]";
+    };
+} else {
+    print("warning: no MinKey class");
+}
+
+// MaxKey
+if (typeof (MaxKey) != "undefined") {
+    const OriginalMaxKey = MaxKey;
+    MaxKey = function () {
+        if (MaxKey.prototype.__instance__ === undefined) {
+            MaxKey.prototype.__instance__ = new OriginalMaxKey();
+        }
+
+        return MaxKey.prototype.__instance__;
+    };
+
+    MaxKey.prototype = OriginalMaxKey.prototype;
+
+    for (const key of Object.getOwnPropertyNames(OriginalMaxKey)) {
+        // Skip prototype, length, name(function internals)
+        if (key !== 'prototype' && key !== 'length' && key !== 'name') {
+            MaxKey[key] = OriginalMaxKey[key];
+        }
+    }
+
+    MaxKey.prototype.toJSON = function () {
+        return this.tojson();
+    };
+
+    MaxKey.prototype.tojson = function () {
+        return "{ \"$MaxKey\" : 1 }";
+    };
+
+    MaxKey.prototype.toString = function () {
+        return "[object Function]";
+    };
+} else {
+    print("warning: no MaxKey class");
+}
+
 // Free Functions
 tojsononeline = function(x) {
     return tojson(x, " ", true);
 };
 
-tojson = function(x, indent, nolint, depth) {
+tojson = function(x, indent, nolint, depth, sortKeys) {
     if (x === null)
         return "null";
 
@@ -734,7 +810,7 @@ tojson = function(x, indent, nolint, depth) {
         case "boolean":
             return "" + x;
         case "object": {
-            var s = tojsonObject(x, indent, nolint, depth);
+            var s = tojsonObject(x, indent, nolint, depth, sortKeys);
             if ((nolint == null || nolint == true) && s.length < 80 &&
                 (indent == null || indent.length == 0)) {
                 s = s.replace(/[\t\r\n]+/gm, " ");
@@ -751,9 +827,12 @@ tojson = function(x, indent, nolint, depth) {
 };
 tojson.MAX_DEPTH = 100;
 
-tojsonObject = function(x, indent, nolint, depth) {
+tojsonObject = function(x, indent, nolint, depth, sortKeys) {
     if (typeof depth !== 'number') {
         depth = 0;
+    }
+    if (typeof sortKeys !== 'boolean') {
+        sortKeys = false;
     }
     var lineEnding = nolint ? " " : "\n";
     var tabSpace = nolint ? "" : "\t";
@@ -765,12 +844,12 @@ tojsonObject = function(x, indent, nolint, depth) {
         indent = "";
 
     if (typeof (x.tojson) == "function" && x.tojson != tojson) {
-        return x.tojson(indent, nolint, depth);
+        return x.tojson(indent, nolint, depth, sortKeys);
     }
 
     if (x.constructor && typeof (x.constructor.tojson) == "function" &&
         x.constructor.tojson != tojson) {
-        return x.constructor.tojson(x, indent, nolint, depth);
+        return x.constructor.tojson(x, indent, nolint, depth, sortKeys);
     }
 
     if (x instanceof Error) {
@@ -796,8 +875,14 @@ tojsonObject = function(x, indent, nolint, depth) {
     var keys = x;
     if (typeof (x._simpleKeys) == "function")
         keys = x._simpleKeys();
-    var fieldStrings = [];
+    var keyNames = [];
     for (var k in keys) {
+        keyNames.push(k);
+    }
+    if (sortKeys) keyNames.sort();
+
+    var fieldStrings = [];
+    for (var k of keyNames) {
         var val = x[k];
 
         // skip internal DB types to avoid issues with interceptors
@@ -806,7 +891,7 @@ tojsonObject = function(x, indent, nolint, depth) {
         if (typeof DBCollection != 'undefined' && val == DBCollection.prototype)
             continue;
 
-        fieldStrings.push(indent + "\"" + k + "\" : " + tojson(val, indent, nolint, depth + 1));
+        fieldStrings.push(indent + "\"" + k + "\" : " + tojson(val, indent, nolint, depth + 1, sortKeys));
     }
 
     if (fieldStrings.length > 0) {
