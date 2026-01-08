@@ -21,8 +21,6 @@
     "@ai-sdk/mistral": "^2.0.20",
     "@ai-sdk/openai": "^2.0.55",
     "@ai-sdk/openai-compatible": "^1.0.23",
-    "@mongodb-js/devtools-connect": "^3.7.2",
-    "@mongodb-js/oidc-plugin": "^1.1.7",
     "ai": "^5.0.81",
     "chalk": "^4.1.2",
     "ollama-ai-provider-v2": "^1.5.1",
