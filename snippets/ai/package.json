@@ -1,7 +1,7 @@
 {
   "name": "@mongosh/snippet-ai",
   "snippetName": "ai",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Provides an AI command suite for mongosh to ask for MongoDB query expressions in natural language.",
   "author": "Gagik Amaryan",
   "main": "dist/index.js",
