@@ -14,6 +14,8 @@ export type GetResponseOptions = {
   expectedOutput: 'command' | 'response';
 };
 
+const MAX_MONGODB_PROVIDER_SAMPLE_DOCS_COUNT = 25;
+
 export class AiProvider {
   private readonly thinking: LoadingAnimationType;
 
@@ -26,12 +28,16 @@ export class AiProvider {
   };
   public model: LanguageModel;
   private currentRequestController: AbortController | null = null;
+  private readonly cliContext: CliContext;
+  private readonly config: Config;
 
   constructor(
-    private readonly cliContext: CliContext,
-    private readonly config: Config,
+    cliContext: CliContext,
+    config: Config,
     initialModel: LanguageModel,
   ) {
+    this.cliContext = cliContext;
+    this.config = config;
     this.thinking = new LoadingAnimation({
       message: 'Thinking...',
     });
@@ -82,10 +88,18 @@ export class AiProvider {
     return (
       await this.cliContext.db.getCollection(collectionName).aggregate([
         {
-          $sample: { size: 3 },
+          $sample: { size: this.getSampleDocsCount() },
         },
       ])
     ).toArray();
+  }
+
+  private getSampleDocsCount(): number {
+    const sampleDocsCount = this.config.get('sampleDocsCount');
+    if (this.activeProvider === 'mongodb') {
+      return Math.min(sampleDocsCount, MAX_MONGODB_PROVIDER_SAMPLE_DOCS_COUNT);
+    }
+    return sampleDocsCount;
   }
 
   /** @internal */
@@ -116,6 +130,8 @@ export class AiProvider {
   /** @internal */
   respond(text: string) {
     this.thinking.stop();
+    // This is currently the only way to write to stdout in mongosh scripts.
+    // MONGOSH-2994 should provide a better way to do this.
     process.stdout.write(text);
   }
 

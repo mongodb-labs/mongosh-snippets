@@ -83,7 +83,7 @@ describe('AI', () => {
         }
 
         async provider(providerName: string) {
-          await this.config.set('provider', providerName as any);
+          await this.config.set('provider', providerName);
           this.ai.respond(`Switched to ${providerName} provider`);
         }
 

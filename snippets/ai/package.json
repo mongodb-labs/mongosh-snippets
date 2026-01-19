@@ -1,8 +1,8 @@
 {
-  "name": "@gagik.co/snippet-ai",
+  "name": "@mongosh/snippet-ai",
   "snippetName": "ai",
-  "version": "0.0.13",
-  "description": "Provides a ai command suite for mongosh to ask for MongoDB query expressions in natural language.",
+  "version": "0.0.14",
+  "description": "Provides an AI command suite for mongosh to ask for MongoDB query expressions in natural language.",
   "author": "Gagik Amaryan",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,8 +12,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint src",
     "prepare": "npm run build",
+    "check": "eslint src && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },

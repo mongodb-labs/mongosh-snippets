@@ -7,6 +7,7 @@ const configSchema = z.object({
   provider: z.enum(['mongodb', 'openai', 'mistral', 'ollama']),
   model: z.string(),
   includeSampleDocs: z.boolean(),
+  sampleDocsCount: z.number().default(5),
   defaultCollection: z.string().optional(),
   parallelRequests: z.boolean(),
 });
@@ -20,6 +21,7 @@ const defaults: Record<ConfigKeys, ConfigSchema[ConfigKeys]> = {
   provider: process.env.MONGOSH_AI_PROVIDER ?? 'mongodb',
   model: process.env.MONGOSH_AI_MODEL ?? 'default',
   includeSampleDocs: process.env.MONGOSH_AI_INCLUDE_SAMPLE_DOCS ?? false,
+  sampleDocsCount: process.env.MONGOSH_AI_SAMPLE_DOCS_COUNT ?? 5,
   defaultCollection: process.env.MONGOSH_AI_DEFAULT_COLLECTION,
   parallelRequests: process.env.MONGOSH_AI_PARALLEL_REQUESTS ?? false,
 };
@@ -36,13 +38,17 @@ export class Config extends EventEmitter<{
     ...defaults,
   };
 
-  private constructor(
-    private readonly replConfig: {
-      set: (key: string, value: unknown) => Promise<void>;
-      get: <T>(key: string) => Promise<T>;
-    },
-  ) {
+  private readonly replConfig: {
+    set: (key: string, value: unknown) => Promise<void>;
+    get: <T>(key: string) => Promise<T>;
+  };
+
+  private constructor(replConfig: {
+    set: (key: string, value: unknown) => Promise<void>;
+    get: <T>(key: string) => Promise<T>;
+  }) {
     super();
+    this.replConfig = replConfig;
   }
 
   static async create(replConfig: {
