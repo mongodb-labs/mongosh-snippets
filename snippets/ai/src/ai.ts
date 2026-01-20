@@ -142,7 +142,8 @@ module.exports = async (globalThis: CliContext) => {
       this.ai.respond(`Switched to ${chalk.blue(model)} model`);
     }
 
-    async askOrHelp(prompt?: string) {
+    async askOrHelp(...args: string[]) {
+      const prompt = args.join(' ');
       if (prompt) {
         await this.ask(prompt);
       } else {
