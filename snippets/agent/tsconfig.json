@@ -10,12 +10,11 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "erasableSyntaxOnly": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"],
     "allowJs": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "src/index.js"],
+  "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

@@ -16,11 +16,15 @@
     "check": "eslint src && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:shell": "DEBUG=true npm run build && /opt/homebrew/bin/mongosh --eval \"require('/Users/gagik.amaryan/mdb/mongosh-snippets/snippets/agent/dist/agent.js')(globalThis); setTimeout(() => { globalThis.agent() }, 5000);'';\" --shell"
+    "test:shell": "DEBUG=true npm run build && /opt/homebrew/bin/mongosh --eval \"require('/Users/gagik.amaryan/mdb/mongosh-snippets/snippets/agent/dist/index.js')(globalThis); setTimeout(() => { globalThis.agent() }, 3000);'';\" --shell"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
     "@earendil-works/pi-tui": "^0.74.0",
+    "@mongosh/shell-api": "^5.0.0",
+    "@mongosh/shell-evaluator": "^5.0.0",
+    "@mongosh/types": "^5.0.3",
+    "@sinclair/typebox": "^0.34.49",
     "chalk": "^5.5.0"
   },
   "devDependencies": {
