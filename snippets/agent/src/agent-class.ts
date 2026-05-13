@@ -2,6 +2,7 @@ import type { Tool } from './tools';
 import type { Skill } from './types';
 import type { StdoutPatcher } from './stdout-patcher';
 import { printBanner } from './banner';
+import createConfirmationExtension from './confirmation-extension';
 
 export type AgentServices = {
   createAgentSessionRuntime: typeof import('@earendil-works/pi-coding-agent').createAgentSessionRuntime;
@@ -80,6 +81,7 @@ export class Agent {
           cwd: options.cwd,
           settingsManager,
           resourceLoaderOptions: {
+            extensionFactories: [createConfirmationExtension],
             skillsOverride: (base) => ({
               skills: [...base.skills, ...mongoshSkills],
               diagnostics: base.diagnostics,
@@ -138,6 +140,7 @@ When responding:
       });
 
       this.stdoutPatcher.enable();
+      
       await printBanner();
 
       await new Promise<void>((resolve) => {
