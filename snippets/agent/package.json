@@ -16,7 +16,7 @@
     "check": "eslint src && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:shell": "DEBUG=true npm run build && /Users/gagik.amaryan/.nvm/versions/node/v23.11.0/bin/mongosh --eval \"require('/Users/gagik.amaryan/mdb/mongosh-snippets/snippets/agent/dist/agent.js')(globalThis)\" --shell"
+    "test:shell": "DEBUG=true npm run build && /opt/homebrew/bin/mongosh --eval \"require('/Users/gagik.amaryan/mdb/mongosh-snippets/snippets/agent/dist/agent.js')(globalThis); setTimeout(() => { globalThis.agent() }, 5000);'';\" --shell"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
