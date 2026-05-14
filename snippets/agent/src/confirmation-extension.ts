@@ -1,4 +1,5 @@
 import { inspect } from 'util';
+import chalk from 'chalk';
 
 type ConfirmationExtensionOptions = {
   skipConfirmation?: boolean;
@@ -8,7 +9,9 @@ type ConfirmationExtensionOptions = {
 
 let globalOptions: ConfirmationExtensionOptions = {};
 
-export function setConfirmationOptions(options: ConfirmationExtensionOptions): void {
+export function setConfirmationOptions(
+  options: ConfirmationExtensionOptions,
+): void {
   globalOptions = options;
 }
 
@@ -16,46 +19,92 @@ export function getConfirmationOptions(): ConfirmationExtensionOptions {
   return globalOptions;
 }
 
-function formatToolCall(toolName: string, params: Record<string, unknown>): string {
-  const lines: string[] = [];
-  lines.push(`Tool: ${toolName}`);
+function formatToolName(toolName: string): string {
+  const displayName = toolName.replace(/_/g, ' ');
+  return chalk.white.bold(displayName);
+}
 
-  for (const [key, value] of Object.entries(params)) {
-    const formatted = typeof value === 'string'
-      ? value
-      : inspect(value, { depth: 3, breakLength: 80 });
-    lines.push(`  ${key}: ${formatted}`);
+function formatToolParams(
+  toolName: string,
+  input: Record<string, unknown>,
+): string {
+  if (toolName === 'mongosh_eval') {
+    const expression = input.expression as string | undefined;
+    if (expression) {
+      return `\n${chalk.yellow(expression)}`;
+    }
   }
 
-  return lines.join('\n');
+  const lines: string[] = [];
+  for (const [key, value] of Object.entries(input)) {
+    const formatted =
+      typeof value === 'string'
+        ? value
+        : inspect(value, { depth: 3, breakLength: 80 });
+    lines.push(`  ${chalk.gray(key)}: ${formatted}`);
+  }
+
+  return lines.length > 0 ? '\n\n' + lines.join('\n') : '';
+}
+
+function formatConfirmationMessage(
+  toolName: string,
+  input: Record<string, unknown>,
+): string {
+  const nameLine = formatToolName(toolName);
+  const paramsSection = formatToolParams(toolName, input);
+  return nameLine + paramsSection;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function createConfirmationExtension(pi: any): void {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  pi.on('tool_call', async (event: { type: 'tool_call'; toolCallId: string; toolName: string; input: Record<string, unknown> }, ctx: { block: (reason?: string) => void; ui: { confirm: (title: string, message: string) => Promise<boolean> } }) => {
-    const { toolName, input } = event;
-    const options = getConfirmationOptions();
+  pi.on(
+    'tool_call',
+    async (
+      event: {
+        type: 'tool_call';
+        toolCallId: string;
+        toolName: string;
+        input: Record<string, unknown>;
+      },
+      ctx: {
+        ui: { confirm: (title: string, message: string) => Promise<boolean> };
+      },
+    ) => {
+      const { toolName, input } = event;
+      const options = getConfirmationOptions();
 
-    if (options.skipConfirmation) {
-      return;
-    }
+      if (options.skipConfirmation) {
+        return;
+      }
 
-    if (options.allowedTools && !options.allowedTools.includes(toolName)) {
-      ctx.block(`Tool "${toolName}" is not in the allowed tools list.`);
-      return;
-    }
+      if (options.allowedTools && !options.allowedTools.includes(toolName)) {
+        return {
+          block: true,
+          reason: `Tool "${toolName}" is not in the allowed tools list.`,
+        };
+      }
 
-    if (options.blockedTools?.includes(toolName)) {
-      ctx.block(`Tool "${toolName}" is blocked by policy.`);
-      return;
-    }
+      if (options.blockedTools?.includes(toolName)) {
+        return {
+          block: true,
+          reason: `Tool "${toolName}" is blocked by policy.`,
+        };
+      }
 
-    const formatted = formatToolCall(toolName, input);
-    const confirmed = await ctx.ui.confirm('Tool Call Confirmation', formatted);
+      const message = formatConfirmationMessage(toolName, input);
+      const confirmed = await ctx.ui.confirm(
+        chalk.cyan('Tool Call Confirmation'),
+        message,
+      );
 
-    if (!confirmed) {
-      ctx.block(`Tool "${toolName}" was cancelled by user.`);
-    }
-  });
+      if (!confirmed) {
+        return {
+          block: true,
+          reason: `Tool "${toolName}" was cancelled by user.`,
+        };
+      }
+    },
+  );
 }
