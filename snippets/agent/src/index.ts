@@ -78,7 +78,7 @@ export = async (mongoshContext: CliContext) => {
 
   const shellCtx = createShellContext({ shellContext });
   const mongoshEvalTool = await createMongoshEvalTool({ shellContext: shellCtx, debugLogging });
-  const stdoutPatcher = createStdoutPatcher({ debugLogging });
+  const stdoutPatcher = createStdoutPatcher();
 
   const services = await loadServices();
 
@@ -92,6 +92,7 @@ export = async (mongoshContext: CliContext) => {
     skillsDir,
     debugLogging,
     stdoutPatcher,
+    shellContext: shellCtx,
   });
 
   const agentFn = async () => {
@@ -103,6 +104,22 @@ export = async (mongoshContext: CliContext) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (agentFn as any).returnsPromise = true;
 
+  // Add resume method - callable as agent.resume <sessionId>
+  const resumeFn = async (sessionId: string) => {
+    if (!sessionId) {
+      process.stderr.write('Usage: agent.resume <session-id>\n');
+      return;
+    }
+    await agent.resume(sessionId);
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (resumeFn as any).isDirectShellCommand = true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (resumeFn as any).returnsPromise = true;
+
+  // Register agent and agent.resume
   shellCtx.instanceState.shellApi['agent'] = agentFn;
   shellCtx.instanceState.context['agent'] = agentFn;
+  shellCtx.instanceState.shellApi['agent.resume'] = resumeFn;
+  shellCtx.instanceState.context['agent.resume'] = resumeFn;
 };

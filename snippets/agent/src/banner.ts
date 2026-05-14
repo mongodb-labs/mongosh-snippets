@@ -6,13 +6,26 @@ export async function printBanner(): Promise<void> {
 
   process.stdout.write('\n');
   process.stdout.write(`    ${g('       .    ')}\n`);
-  process.stdout.write(`    ${g('      /|\\  ')}            ${w('mongosh')}\n`);
-  process.stdout.write(`    ${g('     / | \\ ')}       ${g('▄▄▄    ▄▄▄▄   ▄▄▄▄  ▄ ▄▄▄  ▄▄█▄▄')}\n`);
-  process.stdout.write(`    ${g('    /  |  \\')}      ${g('▀   █  █▀ ▀█  █▀  █  █▀  █    █')}\n`);
-  process.stdout.write(`    ${g('   |  |||  |')}     ${g('▄▀▀▀█  █   █  █▀▀▀▀  █   █    █')}\n`);
-  process.stdout.write(`    ${g('    \\ ||| /')}      ${g('▀▄▄▀█  ▀█▄▀█  ▀█▄▄▀  █   █    ▀▄▄')}\n`);
-  process.stdout.write(`    ${g('     \\|||/ ')}       ${g('       ▄  █')}\n`);
+  process.stdout.write(`    ${g('      /|\\  ')}     ${w('mongosh')}\n`);
+  process.stdout.write(
+    `    ${g('     / | \\ ')}       ${g('▄▄▄    ▄▄▄▄   ▄▄▄▄  ▄ ▄▄▄  ▄▄█▄▄')}\n`,
+  );
+  process.stdout.write(
+    `    ${g('    /  |  \\')}      ${g('▀   █  █▀ ▀█  █▀  █  █▀  █    █')}\n`,
+  );
+  process.stdout.write(
+    `    ${g('   |   |   |')}     ${g('▄▀▀▀█  █   █  █▀▀▀▀  █   █    █')}\n`,
+  );
+  process.stdout.write(
+    `    ${g('    \\  |  /')}      ${g('▀▄▄▀█  ▀█▄▀█  ▀█▄▄▀  █   █    ▀▄▄')}\n`,
+  );
+  process.stdout.write(`    ${g('     \\/|\\/ ')}       ${g('       ▄  █')}\n`);
   process.stdout.write(`    ${g('      |||   ')}      ${g('        ▀▀')}\n`);
   process.stdout.write(`\n`);
-  process.stdout.write(dim('  Type your prompts below. Enter to send, Alt+Enter for new line, /quit to quit.') + '\n\n');
+  process.stdout.write(
+    dim('  Type your prompts below. Enter to send, /quit to quit.\n'),
+  );
+  process.stdout.write(
+    dim('  Run mongosh commands manually with: $ <query>\n'),
+  );
 }

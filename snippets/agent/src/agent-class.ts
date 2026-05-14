@@ -1,8 +1,13 @@
+import * as os from 'os';
+import * as path from 'path';
 import type { Tool } from './tools';
 import type { Skill } from './types';
 import type { StdoutPatcher } from './stdout-patcher';
+import type { ShellContext } from './shell-context';
 import { printBanner } from './banner';
 import createConfirmationExtension from './confirmation-extension';
+import { MongoshInteractiveMode } from './mongosh-interactive-mode';
+import chalk from 'chalk';
 
 export type AgentServices = {
   createAgentSessionRuntime: typeof import('@earendil-works/pi-coding-agent').createAgentSessionRuntime;
@@ -23,9 +28,12 @@ export type AgentOptions = {
   skillsDir: string;
   debugLogging: boolean;
   stdoutPatcher: StdoutPatcher;
+  shellContext: ShellContext;
 };
 
 export class Agent {
+  private static isRunning = false;
+
   private sessionManager: ReturnType<
     typeof import('@earendil-works/pi-coding-agent').SessionManager.create
   >;
@@ -35,6 +43,9 @@ export class Agent {
   private skillsDir: string;
   private debugLogging: boolean;
   private stdoutPatcher: StdoutPatcher;
+  private shellContext: ShellContext;
+  private sessionId: string | undefined;
+  private resumeSessionId: string | undefined;
 
   constructor(options: AgentOptions) {
     this.services = options.services;
@@ -43,20 +54,57 @@ export class Agent {
     this.skillsDir = options.skillsDir;
     this.debugLogging = options.debugLogging;
     this.stdoutPatcher = options.stdoutPatcher;
+    this.shellContext = options.shellContext;
     this.sessionManager = this.services.SessionManager.create(process.cwd());
   }
 
-  async run(): Promise<void> {
+  static getIsRunning(): boolean {
+    return Agent.isRunning;
+  }
+
+  getCurrentSessionId(): string | undefined {
+    return this.sessionId;
+  }
+
+  setResumeSessionId(sessionId: string): void {
+    this.resumeSessionId = sessionId;
+  }
+
+  async resume(sessionId: string): Promise<void> {
+    this.resumeSessionId = sessionId;
+    await this.run({ resumeSessionId: sessionId });
+  }
+
+  async run(options?: { resumeSessionId?: string }): Promise<void> {
+    if (Agent.isRunning) {
+      return;
+    }
+    Agent.isRunning = true;
+
+    const resumeSessionId = options?.resumeSessionId ?? this.resumeSessionId;
+
+    // Save and remove mongosh's stdin listeners to prevent interference with TUI
+    // Note: We intentionally do NOT pause() stdin as the TUI needs it for input handling
     const savedListeners = process.stdin.rawListeners('data') as ((
       ...args: unknown[]
     ) => void)[];
     process.stdin.removeAllListeners('data');
-    process.stdin.pause();
+    // Ensure stdin is in flowing mode for the TUI
+    if (process.stdin.isPaused()) {
+      process.stdin.resume();
+    }
+    // Save and set raw mode to enable capturing special keys (Ctrl+O, etc.)
+    const originalRawMode =
+      process.stdin.isTTY &&
+      (process.stdin as typeof process.stdin & { isRaw?: boolean }).isRaw;
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+    }
 
     const originalExit = process.exit.bind(process);
 
     try {
-      const createRuntime = async (options: {
+      const createRuntime = async (runtimeOptions: {
         cwd: string;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sessionManager: any;
@@ -119,7 +167,7 @@ export class Agent {
         }));
 
         const sessionServices = await createAgentSessionServices({
-          cwd: options.cwd,
+          cwd: runtimeOptions.cwd,
           settingsManager,
           authStorage,
           modelRegistry,
@@ -158,8 +206,8 @@ When responding:
         return {
           ...(await createAgentSessionFromServices({
             services: sessionServices,
-            sessionManager: options.sessionManager,
-            sessionStartEvent: options.sessionStartEvent,
+            sessionManager: runtimeOptions.sessionManager,
+            sessionStartEvent: runtimeOptions.sessionStartEvent,
             customTools: [this.mongoshEvalTool],
           })),
           services: sessionServices,
@@ -167,25 +215,82 @@ When responding:
         };
       };
 
-      const { createAgentSessionRuntime, getAgentDir, InteractiveMode } =
-        this.services;
+      const { createAgentSessionRuntime } = this.services;
+
+      // Use custom MongoDB agent directory
+      const agentDir = path.join(os.homedir(), '.mongodb', 'mongosh', 'agent');
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sessionStartEvent: any = resumeSessionId
+        ? { type: 'session-resume', sessionId: resumeSessionId }
+        : undefined;
 
       const runtime = await createAgentSessionRuntime(createRuntime, {
         cwd: process.cwd(),
-        agentDir: getAgentDir(),
+        agentDir,
         sessionManager: this.sessionManager,
+        ...(sessionStartEvent && { sessionStartEvent }),
       });
 
-      const mode = new InteractiveMode(runtime, {
+      // Create mongosh eval function for the interactive mode
+      const mongoshEval = async (expression: string): Promise<{ output: string; error?: string }> => {
+        const { shellEvaluator, originalEval, formatResultValue, instanceState, capturedPrintOutput } = this.shellContext;
+
+        // Clear captured output before execution
+        capturedPrintOutput.length = 0;
+
+        try {
+          const rawValue = await shellEvaluator.customEval(
+            originalEval,
+            expression,
+            instanceState.context,
+            'mongosh_interactive',
+          );
+
+          const formatted = await formatResultValue(rawValue);
+          const parts: string[] = [];
+
+          if (capturedPrintOutput.length > 0) {
+            parts.push(capturedPrintOutput.join('\n'));
+          }
+          if (formatted) {
+            parts.push(formatted);
+          }
+
+          const output = parts.join('\n') || '(no output)';
+
+          return { output };
+        } catch (err) {
+          const errorMsg = err instanceof Error
+            ? `${err.name}: ${err.message}`
+            : String(err);
+
+          return { output: '', error: errorMsg };
+        }
+      };
+
+      // Create our custom interactive mode with $ mongosh support
+      const mode = new MongoshInteractiveMode(runtime, {
         migratedProviders: [],
         initialImages: [],
         initialMessages: [],
         verbose: this.debugLogging,
+        shellContext: this.shellContext,
+        mongoshEval,
+        debugLogging: this.debugLogging,
+        InteractiveMode: this.services.InteractiveMode,
       });
 
       this.stdoutPatcher.enable();
 
       await printBanner();
+
+      // Capture session ID from sessionManager
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.sessionId = (this.sessionManager as any).sessionId;
+
+      // Initialize the mode (sets up onSubmit handler)
+      await mode.init();
 
       await new Promise<void>((resolve) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -204,12 +309,26 @@ When responding:
         process.stderr.write(`[agent] Error: ${String(err)}\n`);
       }
     } finally {
+      Agent.isRunning = false;
       process.exit = originalExit;
+      // Restore terminal state
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(originalRawMode ?? false);
+      }
       for (const listener of savedListeners) {
         process.stdin.on('data', listener);
       }
       process.stdin.resume();
-      process.stdout.write('\n[Exited agent mode]\n');
+      const sessionId = this.sessionId || this.resumeSessionId;
+      if (sessionId) {
+        process.stdout.write(
+          `Exited agent mode, resume your session with:\n${chalk.green(`agent.resume ${sessionId}`)}`,
+        );
+      } else {
+        process.stdout.write('\n[Exited agent mode]');
+      }
+      // Force prompt redraw - emit newline then move up to trigger readline refresh
+      process.stdin.emit('data', '\n');
     }
   }
 }

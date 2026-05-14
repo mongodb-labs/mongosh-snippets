@@ -3,29 +3,39 @@ export type StdoutPatcher = {
   disable: () => void;
 };
 
-export function createStdoutPatcher(options: { debugLogging: boolean }): StdoutPatcher {
-  const { debugLogging } = options;
+// Specific problematic Kitty protocol sequences to suppress
+const KITTY_QUERY = '\x1b[?u';
+const KITTY_ENABLE_7U = '\x1b[>7u';
+const KITTY_ENABLE_4_2M = '\x1b[>4;2m';
+
+export function createStdoutPatcher(): StdoutPatcher {
   const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+  const originalStderrWrite = process.stderr.write.bind(process.stderr);
   let suppressKittyQueries = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  process.stdout.write = function(chunk: any, encoding?: any, callback?: any) {
-    if (suppressKittyQueries) {
-      const str = typeof chunk === 'string' ? chunk : chunk.toString();
-      // Filter out Kitty protocol query and enable sequences
-      if (str.includes('\x1b[?u') || str.includes('\x1b[>7u') || str.includes('\x1b[>4;2m')) {
-        if (debugLogging) {
-          process.stderr.write(`[agent] Suppressed Kitty sequence: ${String(str)}\n`);
+  const filterWrite = (original: any) =>
+    function (chunk: any, encoding?: any, callback?: any) {
+      if (suppressKittyQueries) {
+        const str = typeof chunk === 'string' ? chunk : chunk.toString();
+        // Only suppress specific Kitty protocol sequences (not general color codes)
+        const isKittySeq =
+          str === KITTY_QUERY ||
+          str === KITTY_ENABLE_7U ||
+          str === KITTY_ENABLE_4_2M ||
+          str.endsWith(KITTY_QUERY) ||
+          str.endsWith(KITTY_ENABLE_7U) ||
+          str.endsWith(KITTY_ENABLE_4_2M);
+        if (isKittySeq) {
+          if (typeof callback === 'function') callback();
+          return true;
         }
-        if (typeof callback === 'function') {
-          callback();
-        }
-        return true;
       }
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (originalStdoutWrite as any)(chunk, encoding, callback);
-  };
+      return original(chunk, encoding, callback);
+    };
+
+  process.stdout.write = filterWrite(originalStdoutWrite);
+  process.stderr.write = filterWrite(originalStderrWrite);
 
   return {
     enable: () => {
