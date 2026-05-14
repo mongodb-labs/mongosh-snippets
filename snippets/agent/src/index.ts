@@ -7,6 +7,10 @@ import { createStdoutPatcher } from './stdout-patcher';
 import { Agent } from './agent-class';
 
 function setupDebugLogging(): boolean {
+  // Ensure telemetry is disabled from pi-coding-agent
+  // This is a safeguard in addition to the settings manager configuration
+  process.env.PI_TELEMETRY = 'false';
+
   const debugLogging = process.env.DEBUG_AGENT === '1';
   const logRequests = process.env.DEBUG_AGENT_REQUESTS === '1';
 

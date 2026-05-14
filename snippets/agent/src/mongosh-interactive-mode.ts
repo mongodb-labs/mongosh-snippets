@@ -2,6 +2,7 @@ import type { ShellContext } from './shell-context';
 import type { InteractiveModeOptions } from '@earendil-works/pi-coding-agent';
 import type { AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 import chalk from 'chalk';
+import { truncateToWidth } from '@earendil-works/pi-tui';
 
 // Extended interface to access private/protected members
 interface ExtendedInteractiveMode {
@@ -121,22 +122,27 @@ class MongoshExecutionComponent {
     this.ui.requestRender();
   }
 
-  render(_width: number): string[] {
+  render(width: number): string[] {
     const lines: string[] = [];
     const prefix = this.excludeFromContext ? '$$' : '$';
     // Simple syntax highlighting with chalk - just show the command
     // Full highlighting is done via the confirmation extension for tool calls
     const header = `${chalk.gray(prefix)} ${chalk.cyan(this.command)}`;
-    lines.push(header);
+    lines.push(truncateToWidth(header, width));
 
     if (this.output.length > 0) {
       const outputText = this.output.join('');
       const outputLines = outputText.split('\n');
+      const prefixStr = chalk.gray('│ ');
+      const prefixWidth = 2; // '│ ' is 2 visible characters
       for (const line of outputLines.slice(0, 100)) {
-        lines.push(chalk.gray('│ ') + line);
+        const availableWidth = Math.max(0, width - prefixWidth);
+        lines.push(prefixStr + truncateToWidth(line, availableWidth));
       }
       if (outputLines.length > 100) {
-        lines.push(chalk.gray(`... ${outputLines.length - 100} more lines`));
+        lines.push(
+          chalk.gray(`... ${outputLines.length - 100} more lines`),
+        );
       }
     }
 

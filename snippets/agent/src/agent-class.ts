@@ -121,6 +121,7 @@ export class Agent {
 
         const settingsManager = SettingsManager.inMemory({
           quietStartup: true,
+          enableInstallTelemetry: false,
         });
 
         // Create auth storage and model registry with MongoDB provider pre-configured
@@ -203,13 +204,39 @@ When responding:
           },
         });
 
+        // Determine if MongoDB should be the default model
+        // Only default to mongodb-chat-latest if it's the only available model
+        // Otherwise, require manual selection by the user
+        const availableModels = modelRegistry.getAvailable();
+        const mongodbModel = modelRegistry.find('mongodb', 'mongodb-chat-latest');
+
+        // Check if MongoDB is the only available model (no other providers configured)
+        const otherModelsExist = availableModels.some(
+          (m) => m.provider !== 'mongodb'
+        );
+        const shouldUseMongoDbAsDefault =
+          mongodbModel && !otherModelsExist && availableModels.length > 0;
+
+        const sessionFromServicesOptions: {
+          services: typeof sessionServices;
+          sessionManager: (typeof runtimeOptions)['sessionManager'];
+          sessionStartEvent?: (typeof runtimeOptions)['sessionStartEvent'];
+          customTools: [typeof this.mongoshEvalTool];
+          model?: typeof mongodbModel;
+        } = {
+          services: sessionServices,
+          sessionManager: runtimeOptions.sessionManager,
+          sessionStartEvent: runtimeOptions.sessionStartEvent,
+          customTools: [this.mongoshEvalTool],
+        };
+
+        // Only set the model if MongoDB should be the default
+        if (shouldUseMongoDbAsDefault) {
+          sessionFromServicesOptions.model = mongodbModel;
+        }
+
         return {
-          ...(await createAgentSessionFromServices({
-            services: sessionServices,
-            sessionManager: runtimeOptions.sessionManager,
-            sessionStartEvent: runtimeOptions.sessionStartEvent,
-            customTools: [this.mongoshEvalTool],
-          })),
+          ...(await createAgentSessionFromServices(sessionFromServicesOptions)),
           services: sessionServices,
           diagnostics: sessionServices.diagnostics,
         };
@@ -240,24 +267,41 @@ When responding:
         capturedPrintOutput.length = 0;
 
         try {
-          const rawValue = await shellEvaluator.customEval(
+          let rawValue = await shellEvaluator.customEval(
             originalEval,
             expression,
             instanceState.context,
             'mongosh_interactive',
           );
 
+          // Auto-call functions that take no arguments (e.g., `history` -> `history()`)
+          // This provides shell-like behavior for zero-argument functions
+          if (typeof rawValue === 'function') {
+            try {
+              rawValue = await rawValue();
+            } catch {
+              // If calling fails, keep the original function reference
+            }
+          }
+
           const formatted = await formatResultValue(rawValue);
-          const parts: string[] = [];
 
+          // Build output: captured print output takes priority, then add formatted result if present
+          let output: string;
           if (capturedPrintOutput.length > 0) {
-            parts.push(capturedPrintOutput.join('\n'));
+            // Has captured print output - use it as primary output
+            output = capturedPrintOutput.join('\n');
+            // Also append formatted result if it's meaningful (not empty/undefined)
+            if (formatted) {
+              output += '\n' + formatted;
+            }
+          } else if (formatted) {
+            // No captured output, but has formatted result
+            output = formatted;
+          } else {
+            // Nothing to show
+            output = '(no output)';
           }
-          if (formatted) {
-            parts.push(formatted);
-          }
-
-          const output = parts.join('\n') || '(no output)';
 
           return { output };
         } catch (err) {

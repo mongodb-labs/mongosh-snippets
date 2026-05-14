@@ -32,6 +32,39 @@ export function createShellContext(options: {
 
   const capturedPrintOutput: string[] = [];
 
+  // Patch the context's print function to capture output
+  if (instanceState.context) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const originalPrint = instanceState.context.print as (...args: any[]) => unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    instanceState.context.print = function(...args: any[]) {
+      const output = args.map((arg) =>
+        typeof arg === 'string' ? arg : JSON.stringify(arg)
+      ).join(' ');
+      capturedPrintOutput.push(output);
+      // Also call original print if it exists
+      if (originalPrint) {
+        return originalPrint.apply(this, args);
+      }
+      return undefined;
+    };
+
+    // Also patch printjson
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const originalPrintJson = instanceState.context.printjson as (value: any) => unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    instanceState.context.printjson = function(value: any) {
+      const output = typeof value === 'string'
+        ? value
+        : JSON.stringify(value, null, 2);
+      capturedPrintOutput.push(output);
+      if (originalPrintJson) {
+        return originalPrintJson.call(this, value);
+      }
+      return undefined;
+    };
+  }
+
   const formatResultValue = async (value: unknown): Promise<string> => {
     if (value === undefined) return '';
 
