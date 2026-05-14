@@ -12,6 +12,8 @@ export type AgentServices = {
   InteractiveMode: typeof import('@earendil-works/pi-coding-agent').InteractiveMode;
   SettingsManager: typeof import('@earendil-works/pi-coding-agent').SettingsManager;
   getAgentDir: typeof import('@earendil-works/pi-coding-agent').getAgentDir;
+  AuthStorage: typeof import('@earendil-works/pi-coding-agent').AuthStorage;
+  ModelRegistry: typeof import('@earendil-works/pi-coding-agent').ModelRegistry;
 };
 
 export type AgentOptions = {
@@ -24,7 +26,9 @@ export type AgentOptions = {
 };
 
 export class Agent {
-  private sessionManager: ReturnType<typeof import('@earendil-works/pi-coding-agent').SessionManager.create>;
+  private sessionManager: ReturnType<
+    typeof import('@earendil-works/pi-coding-agent').SessionManager.create
+  >;
   private services: AgentServices;
   private mongoshEvalTool: Tool;
   private loadedSkills: Skill[];
@@ -43,7 +47,9 @@ export class Agent {
   }
 
   async run(): Promise<void> {
-    const savedListeners = process.stdin.rawListeners('data') as ((...args: unknown[]) => void)[];
+    const savedListeners = process.stdin.rawListeners('data') as ((
+      ...args: unknown[]
+    ) => void)[];
     process.stdin.removeAllListeners('data');
     process.stdin.pause();
 
@@ -57,14 +63,49 @@ export class Agent {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sessionStartEvent?: any;
       }) => {
-        const { SettingsManager, createAgentSessionServices, createAgentSessionFromServices } = this.services;
+        const {
+          SettingsManager,
+          createAgentSessionServices,
+          createAgentSessionFromServices,
+          AuthStorage,
+          ModelRegistry,
+        } = this.services;
 
         const settingsManager = SettingsManager.inMemory({
           quietStartup: true,
         });
 
+        // Create auth storage and model registry with MongoDB provider pre-configured
+        const authStorage = AuthStorage.create();
+        const modelRegistry = ModelRegistry.create(authStorage);
+
+        // Register the MongoDB Docs provider (same as the ai snippet's mongodb provider)
+        // Note: The MongoDB Knowledge API doesn't require authentication, but Pi SDK requires apiKey field
+        modelRegistry.registerProvider('mongodb', {
+          name: 'MongoDB',
+          baseUrl: 'https://knowledge.mongodb.com/api/v1',
+          api: 'openai-responses',
+          apiKey: 'mongodb', // Dummy key - the actual API doesn't require authentication
+          authHeader: false, // Don't send Authorization header
+          headers: {
+            'X-Request-Origin': 'mongodb-mongosh',
+            'user-agent': 'mongodb-mongosh',
+          },
+          models: [
+            {
+              id: 'mongodb-chat-latest',
+              name: 'MongoDB Docs',
+              reasoning: false,
+              input: ['text'],
+              cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+              contextWindow: 128000,
+              maxTokens: 4000, // MongoDB Knowledge API max allowed
+            },
+          ],
+        });
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mongoshSkills: any[] = this.loadedSkills.map(skill => ({
+        const mongoshSkills: any[] = this.loadedSkills.map((skill) => ({
           name: skill.name,
           description: skill.description,
           filePath: skill.source,
@@ -80,6 +121,8 @@ export class Agent {
         const sessionServices = await createAgentSessionServices({
           cwd: options.cwd,
           settingsManager,
+          authStorage,
+          modelRegistry,
           resourceLoaderOptions: {
             extensionFactories: [createConfirmationExtension],
             skillsOverride: (base) => ({
@@ -100,7 +143,7 @@ Guidelines:
 - Check indexes before suggesting queries on large collections
 
 Available skills:
-${this.loadedSkills.map(s => `- ${s.name}: ${s.description}`).join('\n')}
+${this.loadedSkills.map((s) => `- ${s.name}: ${s.description}`).join('\n')}
 
 When responding:
 1. For simple questions, answer directly
@@ -124,7 +167,8 @@ When responding:
         };
       };
 
-      const { createAgentSessionRuntime, getAgentDir, InteractiveMode } = this.services;
+      const { createAgentSessionRuntime, getAgentDir, InteractiveMode } =
+        this.services;
 
       const runtime = await createAgentSessionRuntime(createRuntime, {
         cwd: process.cwd(),
@@ -140,7 +184,7 @@ When responding:
       });
 
       this.stdoutPatcher.enable();
-      
+
       await printBanner();
 
       await new Promise<void>((resolve) => {

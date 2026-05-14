@@ -49,6 +49,8 @@ async function loadServices() {
     SettingsManager,
     getAgentDir,
     initTheme,
+    AuthStorage,
+    ModelRegistry,
   } = await import('@earendil-works/pi-coding-agent');
 
   return {
@@ -60,6 +62,8 @@ async function loadServices() {
     SettingsManager,
     getAgentDir,
     initTheme,
+    AuthStorage,
+    ModelRegistry,
   };
 }
 
