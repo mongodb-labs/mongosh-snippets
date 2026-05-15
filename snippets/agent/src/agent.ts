@@ -16,7 +16,9 @@ function setupDebugLogging(): boolean {
   const logRequests = process.env.DEBUG_AGENT_REQUESTS === '1';
 
   if (debugLogging) {
-    process.stderr.write(`[agent] DEBUG_AGENT_REQUESTS=${process.env.DEBUG_AGENT_REQUESTS ?? 'undefined'}\n`);
+    process.stderr.write(
+      `[agent] DEBUG_AGENT_REQUESTS=${process.env.DEBUG_AGENT_REQUESTS ?? 'undefined'}\n`,
+    );
   }
 
   if (logRequests) {
@@ -27,11 +29,15 @@ function setupDebugLogging(): boolean {
       (globalThis as any).fetch = async (input: any, init?: any) => {
         const url = typeof input === 'string' ? input : input.toString();
         const method = init?.method || 'GET';
-        process.stderr.write(`[agent:fetch] ${String(method)} ${String(url)}\n`);
+        process.stderr.write(
+          `[agent:fetch] ${String(method)} ${String(url)}\n`,
+        );
         const start = Date.now();
         try {
           const response = await originalFetch(input, init);
-          process.stderr.write(`[agent:fetch] Response: ${String(response.status)} (${String(Date.now() - start)}ms)\n`);
+          process.stderr.write(
+            `[agent:fetch] Response: ${String(response.status)} (${String(Date.now() - start)}ms)\n`,
+          );
           return response;
         } catch (err) {
           process.stderr.write(`[agent:fetch] Error: ${String(err)}\n`);
@@ -82,7 +88,10 @@ export = async (mongoshContext: CliContext) => {
   const loadedSkills = loadSkillsFromDir(skillsDir);
 
   const shellCtx = createShellContext({ shellContext });
-  const mongoshEvalTool = await createMongoshEvalTool({ shellContext: shellCtx, debugLogging });
+  const mongoshEvalTool = await createMongoshEvalTool({
+    shellContext: shellCtx,
+    debugLogging,
+  });
   const searchDocsTool = await createSearchDocsTool();
   const stdoutPatcher = createStdoutPatcher();
 

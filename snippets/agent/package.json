@@ -1,11 +1,10 @@
 {
   "name": "@gagik.co/snippet-agent",
   "snippetName": "agent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Integrates Pi coding agent with mongosh",
   "author": "Gagik Amaryan",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "license": "Apache-2.0",
   "files": [
     "dist/",
@@ -20,7 +19,7 @@
     "check": "eslint src && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev": "npm run build && mongosh --eval \"require('./dist/index.js')(globalThis);''\" --shell"
+    "dev": "npm run build && mongosh --eval \"require('./dist/agent.js')(globalThis);''\" --shell"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
