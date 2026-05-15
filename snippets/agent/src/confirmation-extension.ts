@@ -6,6 +6,7 @@ type ConfirmationExtensionOptions = {
   skipConfirmation?: boolean;
   allowedTools?: string[];
   blockedTools?: string[];
+  skipConfirmTools?: string[];
 };
 
 let globalOptions: ConfirmationExtensionOptions = {};
@@ -220,6 +221,11 @@ export default function createConfirmationExtension(pi: any): void {
           block: true,
           reason: `Tool "${toolName}" is blocked by policy.`,
         };
+      }
+
+      // Skip confirmation for whitelisted tools
+      if (options.skipConfirmTools?.includes(toolName)) {
+        return;
       }
 
       const { title, message } = formatConfirmationMessage(toolName, input);

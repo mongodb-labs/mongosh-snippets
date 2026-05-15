@@ -2,8 +2,9 @@ import * as path from 'path';
 import type { CliContext } from './types';
 import { loadSkillsFromDir } from './skills-loader';
 import { createShellContext } from './shell-context';
-import { createMongoshEvalTool } from './tools';
+import { createMongoshEvalTool, createSearchDocsTool } from './tools';
 import { createStdoutPatcher } from './stdout-patcher';
+import { setConfirmationOptions } from './confirmation-extension';
 import { Agent } from './agent-class';
 
 function setupDebugLogging(): boolean {
@@ -82,6 +83,7 @@ export = async (mongoshContext: CliContext) => {
 
   const shellCtx = createShellContext({ shellContext });
   const mongoshEvalTool = await createMongoshEvalTool({ shellContext: shellCtx, debugLogging });
+  const searchDocsTool = await createSearchDocsTool();
   const stdoutPatcher = createStdoutPatcher();
 
   const services = await loadServices();
@@ -89,9 +91,15 @@ export = async (mongoshContext: CliContext) => {
   // Initialize theme after loading services
   services.initTheme('dark', false);
 
+  // Whitelist search_docs tool to run without confirmation
+  setConfirmationOptions({
+    skipConfirmTools: ['search_docs'],
+  });
+
   const agent = new Agent({
     services,
     mongoshEvalTool,
+    searchDocsTool,
     loadedSkills,
     skillsDir,
     debugLogging,

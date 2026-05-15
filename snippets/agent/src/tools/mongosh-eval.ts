@@ -1,13 +1,12 @@
-import type { ShellContext } from './shell-context';
+import type { ShellContext } from '../shell-context';
+import type { Tool } from './types';
 
-export type Tool = ReturnType<
-  typeof import('@earendil-works/pi-coding-agent').defineTool
->;
-
-export async function createMongoshEvalTool(options: {
+export type CreateMongoshEvalToolOptions = {
   shellContext: ShellContext;
   debugLogging: boolean;
-}): Promise<Tool> {
+};
+
+export async function createMongoshEvalTool(options: CreateMongoshEvalToolOptions): Promise<Tool> {
   const { shellContext, debugLogging } = options;
   const { defineTool } = await import('@earendil-works/pi-coding-agent');
   const { Type } = await import('@sinclair/typebox');

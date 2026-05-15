@@ -24,6 +24,7 @@ export type AgentServices = {
 export type AgentOptions = {
   services: AgentServices;
   mongoshEvalTool: Tool;
+  searchDocsTool: Tool;
   loadedSkills: Skill[];
   skillsDir: string;
   debugLogging: boolean;
@@ -39,6 +40,7 @@ export class Agent {
   >;
   private services: AgentServices;
   private mongoshEvalTool: Tool;
+  private searchDocsTool: Tool;
   private loadedSkills: Skill[];
   private skillsDir: string;
   private debugLogging: boolean;
@@ -50,6 +52,7 @@ export class Agent {
   constructor(options: AgentOptions) {
     this.services = options.services;
     this.mongoshEvalTool = options.mongoshEvalTool;
+    this.searchDocsTool = options.searchDocsTool;
     this.loadedSkills = options.loadedSkills;
     this.skillsDir = options.skillsDir;
     this.debugLogging = options.debugLogging;
@@ -217,17 +220,19 @@ When responding:
         const shouldUseMongoDbAsDefault =
           mongodbModel && !otherModelsExist && availableModels.length > 0;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sessionFromServicesOptions: {
           services: typeof sessionServices;
           sessionManager: (typeof runtimeOptions)['sessionManager'];
           sessionStartEvent?: (typeof runtimeOptions)['sessionStartEvent'];
-          customTools: [typeof this.mongoshEvalTool];
-          model?: typeof mongodbModel;
+          customTools: Tool[];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          model?: any;
         } = {
           services: sessionServices,
           sessionManager: runtimeOptions.sessionManager,
           sessionStartEvent: runtimeOptions.sessionStartEvent,
-          customTools: [this.mongoshEvalTool],
+          customTools: [this.mongoshEvalTool, this.searchDocsTool],
         };
 
         // Only set the model if MongoDB should be the default
