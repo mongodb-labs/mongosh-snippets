@@ -6,7 +6,9 @@ export type CreateMongoshEvalToolOptions = {
   debugLogging: boolean;
 };
 
-export async function createMongoshEvalTool(options: CreateMongoshEvalToolOptions): Promise<Tool> {
+export async function createMongoshEvalTool(
+  options: CreateMongoshEvalToolOptions,
+): Promise<Tool> {
   const { shellContext, debugLogging } = options;
   const { defineTool } = await import('@earendil-works/pi-coding-agent');
   const { Type } = await import('@sinclair/typebox');
@@ -24,14 +26,13 @@ export async function createMongoshEvalTool(options: CreateMongoshEvalToolOption
     label: 'mongosh eval',
     description:
       'Execute a mongosh shell expression against the connected MongoDB instance. ' +
-      'Supports the full mongosh API: queries, aggregations, admin commands, ' +
-      'direct shell commands (show dbs, use <db>, it, etc.), and auto-awaiting. ' +
+      'Supports the full mongosh API: queries, aggregations, admin commands ' +
       'The expression runs in the same context as the interactive mongosh REPL.' +
       'Note: make sure to double-check with the user before running destructive or risky operations.',
     parameters: Type.Object({
       expression: Type.String({
         description:
-          'The mongosh expression to evaluate. Examples: "db.getMongo()", "db.users.find().limit(5)", "show dbs", "use mydb", "db.serverStatus()". The last line of the output will be the result of the tool call.',
+          'The mongosh expression to evaluate. Never run `use` to switch databases and instead refer to the database name explicitly. Examples: "db.getMongo()", "db.users.find().limit(5)", "db.serverStatus()", "db.getSiblingDB(\'movies\')". The last line of the output will be the result of the tool call.',
       }),
     }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -146,7 +146,7 @@ export class Agent {
           models: [
             {
               id: 'mongodb-chat-latest',
-              name: 'MongoDB Docs',
+              name: 'MongoDB Assistant',
               reasoning: false,
               input: ['text'],
               cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -211,11 +211,14 @@ When responding:
         // Only default to mongodb-chat-latest if it's the only available model
         // Otherwise, require manual selection by the user
         const availableModels = modelRegistry.getAvailable();
-        const mongodbModel = modelRegistry.find('mongodb', 'mongodb-chat-latest');
+        const mongodbModel = modelRegistry.find(
+          'mongodb',
+          'mongodb-chat-latest',
+        );
 
         // Check if MongoDB is the only available model (no other providers configured)
         const otherModelsExist = availableModels.some(
-          (m) => m.provider !== 'mongodb'
+          (m) => m.provider !== 'mongodb',
         );
         const shouldUseMongoDbAsDefault =
           mongodbModel && !otherModelsExist && availableModels.length > 0;
@@ -265,8 +268,16 @@ When responding:
       });
 
       // Create mongosh eval function for the interactive mode
-      const mongoshEval = async (expression: string): Promise<{ output: string; error?: string }> => {
-        const { shellEvaluator, originalEval, formatResultValue, instanceState, capturedPrintOutput } = this.shellContext;
+      const mongoshEval = async (
+        expression: string,
+      ): Promise<{ output: string; error?: string }> => {
+        const {
+          shellEvaluator,
+          originalEval,
+          formatResultValue,
+          instanceState,
+          capturedPrintOutput,
+        } = this.shellContext;
 
         // Clear captured output before execution
         capturedPrintOutput.length = 0;
@@ -310,9 +321,8 @@ When responding:
 
           return { output };
         } catch (err) {
-          const errorMsg = err instanceof Error
-            ? `${err.name}: ${err.message}`
-            : String(err);
+          const errorMsg =
+            err instanceof Error ? `${err.name}: ${err.message}` : String(err);
 
           return { output: '', error: errorMsg };
         }

@@ -16,7 +16,7 @@
     "check": "eslint src && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev": "npm run build && mongosh --eval \"require('/Users/gagik.amaryan/mdb/mongosh-snippets/snippets/agent/dist/index.js')(globalThis); setTimeout(() => { globalThis.agent() }, 1500);'';\" --shell"
+    "dev": "npm run build && mongosh --eval \"require('./dist/index.js')(globalThis);''\" --shell"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
