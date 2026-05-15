@@ -1,0 +1,41 @@
+{
+  "name": "@gagik.co/snippet-agent",
+  "snippetName": "agent",
+  "version": "0.1.2",
+  "description": "Integrates Pi coding agent with mongosh",
+  "author": "Gagik Amaryan",
+  "main": "dist/index.js",
+  "license": "Apache-2.0",
+  "files": [
+    "dist/",
+    "skills/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "check": "eslint src && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "npm run build && mongosh --eval \"require('./dist/agent.js')(globalThis);''\" --shell"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@earendil-works/pi-tui": "^0.74.0",
+    "@mongosh/shell-api": "^5.0.0",
+    "@mongosh/shell-evaluator": "^5.0.0",
+    "@mongosh/types": "^5.0.3",
+    "@sinclair/typebox": "^0.34.49",
+    "chalk": "^5.5.0",
+    "cli-highlight": "^2.1.11"
+  },
+  "devDependencies": {
+    "@mongodb-js/eslint-config-devtools": "^0.9.11",
+    "@mongodb-js/prettier-config-devtools": "^1.0.2",
+    "@types/node": "^20.17.48",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.16"
+  }
+}

@@ -2,8 +2,10 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "@types/node": "^25.7.0",
     "bson": "^4.3.0",
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "typescript": "^6.0.3"
   },
   "scripts": {
     "make-index": "node scripts/make-index",
