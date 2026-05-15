@@ -1,5 +1,5 @@
 {
-  "name": "@mongosh/snippet-agent",
+  "name": "@gagik.co/snippet-agent",
   "snippetName": "agent",
   "version": "0.1.0",
   "description": "Integrates Pi coding agent with mongosh",
