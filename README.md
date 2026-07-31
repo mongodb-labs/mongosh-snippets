@@ -65,7 +65,7 @@ and load it using `load()` by default on each mongosh startup.
 
 This also means that snippets can depend on npm packages, and use them in their
 functionality. For example, the `analyze-schema` example above uses the
-[`mongodb-schema`][] package from npm to perform the analysis itself.
+[`@mongodb-js/mongodb-schema`][] package from npm to perform the analysis itself.
 
 ## Can I add my own snippets?
 
@@ -144,6 +144,6 @@ interface SnippetIndexFile {
 [mongosh]: https://github.com/mongodb-js/mongosh
 [JIRA]: https://jira.mongodb.org/projects/MONGOSH/issues
 [npm]: https://www.npmjs.com/
-[`mongodb-schema`]: https://www.npmjs.com/package/mongodb-schema
+[@mongodb-js/mongodb-schema]: https://www.npmjs.com/package/@mongodb-js/mongodb-schema
 [brotli]: https://github.com/google/brotli/
 [BSON]: https://bsonspec.org/
