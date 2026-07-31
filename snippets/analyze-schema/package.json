@@ -6,7 +6,7 @@
   "main": "index.js",
   "license": "Apache-2.0",
   "dependencies": {
-    "mongodb-schema": "^9.0.0"
+    "@mongodb-js/mongodb-schema": "^12.7.1"
   },
   "publishConfig": {
     "access": "public"

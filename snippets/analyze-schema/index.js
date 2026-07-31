@@ -1,6 +1,6 @@
 (() => {
   const localRequire = require('module').createRequire(__filename);
-  const schema = localRequire('mongodb-schema');
+  const schema = localRequire('@mongodb-js/mongodb-schema');
   const { Readable, PassThrough } = localRequire('stream');
   const { Console } = localRequire('console');
 

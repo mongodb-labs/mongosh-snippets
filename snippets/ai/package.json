@@ -32,7 +32,7 @@
     "@mongodb-js/eslint-config-devtools": "^0.9.11",
     "@mongodb-js/prettier-config-devtools": "^1.0.2",
     "@types/node": "^20.17.48",
-    "mongodb-schema": "^12.6.2",
+    "@mongodb-js/mongodb-schema": "^12.7.1",
     "typescript": "^5.0.0",
     "vitest": "^4.0.16"
   }
