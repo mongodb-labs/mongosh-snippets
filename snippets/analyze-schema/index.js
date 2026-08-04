@@ -4,7 +4,7 @@
   const { Readable, PassThrough } = localRequire('stream');
   const { Console } = localRequire('console');
 
-  globalThis.schema = function(collOrCursor, options = {}) {
+  globalThis.schema = async function(collOrCursor, options = {}) {
     let cursor;
     if (typeof collOrCursor.tryNext === 'function') {
       cursor = collOrCursor;
@@ -13,16 +13,13 @@
       cursor = collOrCursor.aggregate([{$sample: { size: Math.ceil(size) }}]);
     }
 
-    const schemaStream = schema.stream({ semanticTypes: true, ...options });
-    let result;
-    schemaStream.on('data', (data) => result = data);
-
+    const docs = [];
     let doc;
     while ((doc = cursor.tryNext()) !== null) {
-      schemaStream.write(doc);
+      docs.push(doc);
     }
-    schemaStream.end();
-    sleep(0);
+
+    const result = await schema.parseSchema(docs, { semanticTypes: true, ...options });
 
     if (options.verbose) {
       return result;
@@ -31,10 +28,12 @@
     const simplified = [];
     let maxFieldPathLength = 0;
     for (const field of allFields(result.fields)) {
-      maxFieldPathLength = Math.max(maxFieldPathLength, field.path.length);
+      // As of @mongodb-js/mongodb-schema v10, `path` is an array of path components.
+      const path = Array.isArray(field.path) ? field.path.join('.') : field.path;
+      maxFieldPathLength = Math.max(maxFieldPathLength, path.length);
       const types = field.types || [{ name: field.type, probability: 1 }];
       for (const { probability, name } of types) {
-        simplified.push([field.path, `${(probability * 100).toFixed(1)} %`, name]);
+        simplified.push([path, `${(probability * 100).toFixed(1)} %`, name]);
       }
     }
 
